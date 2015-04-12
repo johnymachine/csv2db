@@ -2,3 +2,8 @@
 1. b. Co je blok měření? Je zásadní sloučit měření ve výpisu? Filtrovat v rámci jednoho bloku měření nebo celkem?
 2. Jak filtrovat dle místa měření? Problém float hodnoty - přidání rádiusu (čtverec).
 3. Zobrazit kompletní detail (všechny informace) ke každé naměřené hodnotě?
+======2015-04-09 Odpovězeno=====
+
+1. Verze PostgreSQL? Musí být minimálně 9.0 - použití plpython
+
+
