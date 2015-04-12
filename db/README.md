@@ -6,6 +6,12 @@ Required packages
 	postgresql 
 	postgresql-contrib 
 	postgresql-plpython
-As superuser on used database perform query below to enable plpythonu extension.
+
+Connect to database via command line (required package postgresql)
+	psql -h SERVER_IP -U DATABASE_NAME
+
+As superuser on used database perform query below to enable plpythonu extension and grant permissions to user.
 	CREATE EXTENSION plpythonu;
 
+Create function csv_parse as database useruser
+    psql -h SERVER_IP -d DATABASE_NAME -U SUPERUSER_ROLE -f db/scripts/csv-parse-function.sql
