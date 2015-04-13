@@ -1,6 +1,12 @@
 # csv2db
 RDB - Školni projekt
 
+## Školní databáze
+```
+	psql -h 147.230.21.34 -U student -d postgres
+	# heslo stejné jako na cvičení
+```
+
 ## Zadání
 	- sada souborů CSV
 ### Struktura
