@@ -2,21 +2,22 @@
 # -*- coding: utf-8 -*-
 import csv
 
-class RdbDialect(csv.Dialect):
-    #https://docs.python.org/3.5/library/csv.html#csv-fmt-params
-    delimiter = ','
-    doublequote = True
+class RdbCsvDialect(csv.Dialect):
+    # https://docs.python.org/3.5/library/csv.html#csv-fmt-params
+    # default values
+    delimiter = ';'
+    doublequote = False
     escapechar = None
     lineterminator = "\r\n"
     quotechar = '"'
     quoting = csv.QUOTE_MINIMAL
     skipinitialspace = True
-    strict = False
+    strict = True
 
 
-class RdbReader(object):
+class RdbCsvReader(object):
 
-    def __init__(self, filename, dialect = RdbDialect, **kwds):
+    def __init__(self, filename, dialect, **kwds):
         self.file = open(filename, "r")
         self.reader = csv.reader(self.file, dialect=dialect, **kwds)
 
@@ -32,7 +33,7 @@ class RdbReader(object):
     def readrow(self):
         return self.__next__()
 
-    def readrows(self, rowscount = 1):
+    def readrows(self, rowscount=1):
         rows = []
         for i in range(rowscount):
             rows.append(self.readrow())
@@ -42,9 +43,9 @@ class RdbReader(object):
         self.file.close()
 
 
-class RdbWriter(object):
+class RdbCsvWriter(object):
 
-    def __init__(self, filename, dialect = RdbDialect, **kwds):
+    def __init__(self, filename, dialect, **kwds):
         self.file = open(filename, "w")
         self.writer = csv.writer(self.file, dialect=dialect, **kwds)
 
@@ -61,8 +62,9 @@ class RdbWriter(object):
         self.file.close()
 
 if __name__ == "__main__":
-    with RdbReader("in.csv") as rdbreader:
-        row = rdbreader.readrows(1)
-    with RdbWriter("out.csv") as rdbwriter:
-        rows = row + row
-        rdbwriter.writerows(rows)
+    rows = []
+    with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
+        rows = csvreader.readrows(5)
+    print(rows)
+    with RdbCsvWriter("out.csv", RdbCsvDialect) as csvwriter:
+        csvwriter.writerows(rows)
