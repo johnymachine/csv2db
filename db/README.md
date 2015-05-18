@@ -27,8 +27,5 @@ Create function csv_parse as database useruser
 ## Development requirements
 ```
 sudo apt-get install python3-dev
-```
-In python's virtual environment
-```
 pip3 install psycopg2
 ```
