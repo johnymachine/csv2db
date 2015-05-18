@@ -36,7 +36,10 @@ class RdbCsvReader(object):
     def readrows(self, rowscount=1):
         rows = []
         for i in range(rowscount):
-            rows.append(self.readrow())
+            try:
+                rows.append(self.readrow())
+            except StopIteration:
+                break
         return rows
 
     def __exit__(self, *err):
@@ -64,7 +67,8 @@ class RdbCsvWriter(object):
 if __name__ == "__main__":
     rows = []
     with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
-        rows = csvreader.readrows(5)
+        rows = csvreader.readrows(998)
+        rows = csvreader.readrows(998)
     print(rows)
     with RdbCsvWriter("out.csv", RdbCsvDialect) as csvwriter:
         csvwriter.writerows(rows)
