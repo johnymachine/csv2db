@@ -49,7 +49,6 @@ class RdbCsvReader(object):
                 return
             yield rows
             
-
     def __exit__(self, *err):
         self.file.close()
 
@@ -76,9 +75,8 @@ if __name__ == "__main__":
     rows = []
 
     with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
-        for rows in csvreader.readall(1000):
+        for rows in csvreader.readall(998):
             print(len(rows))
-
 
     with RdbCsvWriter("out.csv", RdbCsvDialect) as csvwriter:
         csvwriter.writerows(rows)
