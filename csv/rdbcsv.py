@@ -17,6 +17,8 @@ class RdbCsvDialect(csv.Dialect):
 
 class RdbCsvReader(object):
 
+    ROWS_CHUNK = 1000
+
     def __init__(self, filename, dialect, **kwds):
         self.file = open(filename, "r")
         self.reader = csv.reader(self.file, dialect=dialect, **kwds)
@@ -33,14 +35,20 @@ class RdbCsvReader(object):
     def readrow(self):
         return self.__next__()
 
-    def readrows(self, rowscount=1):
-        rows = []
-        for i in range(rowscount):
-            try:
-                rows.append(self.readrow())
-            except StopIteration:
-                break
-        return rows
+    def readall(self, rows_chunk=ROWS_CHUNK):
+        reading_complete = False
+        while not reading_complete:  # read file while possible
+            rows = []
+            for i in range(rows_chunk):  # read a chunk of rows
+                try:
+                    rows.append(self.readrow())
+                except StopIteration:  # end of file
+                    reading_complete = True
+                    break
+            if not rows:  # don't yield an empty list at the end of file
+                return
+            yield rows
+            
 
     def __exit__(self, *err):
         self.file.close()
@@ -66,9 +74,11 @@ class RdbCsvWriter(object):
 
 if __name__ == "__main__":
     rows = []
+
     with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
-        rows = csvreader.readrows(998)
-        rows = csvreader.readrows(998)
-    print(rows)
+        for rows in csvreader.readall(1000):
+            print(len(rows))
+
+
     with RdbCsvWriter("out.csv", RdbCsvDialect) as csvwriter:
         csvwriter.writerows(rows)
