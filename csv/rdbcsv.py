@@ -63,20 +63,22 @@ class RdbCsvWriter(object):
         return self
 
     def writerow(self, row):
-        return self.writer.writerow(row)
+        self.writer.writerow(row)
 
     def writerows(self, rows):
-        return self.writer.writerow([row for row in rows])
+        for row in rows:
+            self.writer.writerow(row)
 
     def __exit__(self, *err):
         self.file.close()
 
-if __name__ == "__main__":
-    rows = []
 
+if __name__ == "__main__":
     with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
         for rows in csvreader.readall(998):
             print(len(rows))
 
     with RdbCsvWriter("out.csv", RdbCsvDialect) as csvwriter:
-        csvwriter.writerows(rows)
+        with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
+            for rows in csvreader.readall(100):
+                csvwriter.writerows(rows)
