@@ -4,8 +4,10 @@ Main application window.
 Author: Tomas Krizek
 """
 
-from ui_mainwindow import Ui_MainWindow
-from PyQt5.QtWidgets import QMainWindow, QApplication, qApp
+from PyQt5.QtWidgets import QMainWindow, qApp
+
+from .ui_mainwindow import Ui_MainWindow
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -32,15 +34,3 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _uconvert(self, text):
         """Converts QString encoding to Python unicode string."""
         return unicode(self.text_codec.fromUnicode(text), 'UTF-16')
-
-
-def main():
-    import sys
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
