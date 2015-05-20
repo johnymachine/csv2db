@@ -21,7 +21,7 @@ RDB - Školni projekt
 	hodnota2(float), 
 	odchylka-veliciny(float), 
 	seriove-cislo-pristroje(char, unikatni), 
-	odchylka-pristroje(float), 
+	 ---- v csv souboru neni ---- odchylka-pristroje(float), 
 	popis-pristroje(nvarchar), 
 	mereni-id(int, seskupeni mereni do bloku), 
 	mereni-popis(nvarchar)
