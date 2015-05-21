@@ -9,7 +9,7 @@ create table "raw_data" (
     "timestamp" timestamp not null, 
     "unit" character varying(30) not null,
     "location_id" integer not null,
-    "longtitude" real not null,
+    "longitude" real not null,
     "latitute" real not null, 
     "location_description" character varying(250),
     "value1" real not null,
