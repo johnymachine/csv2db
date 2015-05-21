@@ -10,7 +10,7 @@ create table "raw_data" (
     "unit" character varying(30) not null,
     "location_id" integer not null,
     "longitude" real not null,
-    "latitute" real not null, 
+    "latitude" real not null, 
     "location_description" character varying(250),
     "value1" real not null,
     "value2" real not null,
@@ -48,8 +48,8 @@ create table "blocks" (
 
 create table "locations" (
     "id" integer not null,
-    "longtitute" real not null,
-    "latitute" real not null,
+    "longitude" real not null,
+    "latitude" real not null,
     "description" character varying(250)
 ) with (oids=false);
 
