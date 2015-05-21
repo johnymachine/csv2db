@@ -4,11 +4,12 @@ Main application window.
 Author: Tomas Krizek
 """
 
-from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QFileDialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
 
 from .. import database as db
+from ..csv import CsvReader, CsvDialect
 from .viewremovetablewidget import ViewRemoveTableWidget
 
 
@@ -27,6 +28,7 @@ class MainWindow(QMainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
 
+        # TABS
         self.tabsWidget = QtWidgets.QTabWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -34,12 +36,14 @@ class MainWindow(QMainWindow):
         sizePolicy.setHeightForWidth(self.tabsWidget.sizePolicy().hasHeightForWidth())
         self.tabsWidget.setSizePolicy(sizePolicy)
 
+        # DEVICES
         self.devicesWidget = ViewRemoveTableWidget(self.tabsWidget)
         self.devicesWidget.setColumnHeaders(['Sériové číslo', 'Název'])
         self.devicesWidget.removeRow.connect(self.on_devicesWidget_removeRow)
         self.devicesWidget.button.setText('Odstranit přístroj')
         self.devicesWidget.label.setText('Přístroje')
 
+        # BLOCKS
         self.blocksWidget = ViewRemoveTableWidget(self.tabsWidget)
         self.blocksWidget.setColumnHeaders(['Identifikátor', 'Název'])
         self.blocksWidget.removeRow.connect(self.on_blocksWidget_removeRow)
@@ -55,7 +59,28 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.tabsWidget)
 
-        # QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        # MENU
+        menuBar = QtWidgets.QMenuBar(MainWindow)
+        menuBar.setGeometry(QtCore.QRect(0, 0, 800, 20))
+
+        action_Import = QtWidgets.QAction(MainWindow)
+        action_Import.setText('&Import')
+        action_Import.triggered.connect(self.on_action_Import_triggered)
+        action_Export = QtWidgets.QAction(MainWindow)
+        action_Export.setText('&Export')
+        action_Export.triggered.connect(self.on_action_Export_triggered)
+
+        menu_File = QtWidgets.QMenu(menuBar)
+        menu_File.setTitle('&Soubor')
+        menu_File.addAction(action_Import)
+        menu_File.addAction(action_Export)
+        menuBar.addAction(menu_File.menuAction())
+
+        menu_About = QtWidgets.QMenu(menuBar)
+        menu_About.setTitle('O &aplikaci')
+        menuBar.addAction(menu_About.menuAction())
+        
+        MainWindow.setMenuBar(menuBar)
 
     def populateDevices(self):
         self.devicesWidget.setData(db.get_devices(self.conn))
@@ -94,6 +119,22 @@ class MainWindow(QMainWindow):
         if msgBox.exec_() == QMessageBox.Yes:
             db.remove_block(self.conn, id_)
             self.populateBlocks()
+
+    def on_action_Import_triggered(self):
+        caption = 'Import csv dat'
+        dialog = QFileDialog(self, caption)
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setNameFilters(['CSV soubory (*.csv)', 'Všechny soubory (*)'])
+        if dialog.exec_():
+            filename = dialog.selectedFiles()[0]
+            filename = '/home/sharp/drive/tul/n1-l/rdb/csv2db/testdata/in.csv'
+            # TODO progress bar, exception handling
+            with CsvReader(filename, CsvDialect) as csvreader:
+                for rows in csvreader.readall():
+                    db.import_data(self.conn, rows)
+
+    def on_action_Export_triggered(self):
+        print('export')
 
     def __del__(self):
         del self.conn
