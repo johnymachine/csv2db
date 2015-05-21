@@ -1,3 +1,4 @@
+-- psql -h 127.0.0.1 -U postgres -d RDB2015_DanielMadera -f create-script.sql
 -- psql -h 147.230.21.34 -U student -d RDB2015_DanielMadera -f create-script.sql
 
 drop schema if exists "rdb" cascade;
@@ -8,14 +9,13 @@ create table "raw_data" (
     "timestamp" timestamp not null, 
     "unit" character varying(30) not null,
     "location_id" integer not null,
-    "longtitute" real not null,
+    "longtitude" real not null,
     "latitute" real not null, 
     "location_description" character varying(250),
     "value1" real not null,
     "value2" real not null,
     "unit_deviation" real not null,
     "device_sn" character varying(80) not null,
-    "device_deviation" real not null,
     "device_description" character varying(250),
     "block_id" integer not null,
     "block_description" character varying(250)
