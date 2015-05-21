@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import csv
 
-class RdbCsvDialect(csv.Dialect):
+class CsvDialect(csv.Dialect):
     # https://docs.python.org/3.5/library/csv.html#csv-fmt-params
     # default values
     delimiter = ';'
@@ -15,8 +15,7 @@ class RdbCsvDialect(csv.Dialect):
     strict = True
 
 
-class RdbCsvReader(object):
-
+class CsvReader(object):
     ROWS_CHUNK = 1000
 
     def __init__(self, filename, dialect, **kwds):
@@ -53,8 +52,7 @@ class RdbCsvReader(object):
         self.file.close()
 
 
-class RdbCsvWriter(object):
-
+class CsvWriter(object):
     def __init__(self, filename, dialect, **kwds):
         self.file = open(filename, "w")
         self.writer = csv.writer(self.file, dialect=dialect, **kwds)
@@ -74,11 +72,11 @@ class RdbCsvWriter(object):
 
 
 if __name__ == "__main__":
-    with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
+    with CsvReader("in.csv", RdbCsvDialect) as csvreader:
         for rows in csvreader.readall(998):
             print(len(rows))
 
-    with RdbCsvWriter("out.csv", RdbCsvDialect) as csvwriter:
+    with CsvWriter("out.csv", RdbCsvDialect) as csvwriter:
         with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
             for rows in csvreader.readall(100):
                 csvwriter.writerows(rows)
