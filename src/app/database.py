@@ -82,4 +82,20 @@ def _get_import_values_string(cur, row):
     return cur.mogrify("(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         row).decode('utf-8')
 
+def export_data(conn, filename):
+    """Exports all raw_data."""
+    # TODO export from view, not raw_data
+    query = """
+    select (select round(extract(epoch from "timestamp" at time zone 'utc-2'))),\
+            "unit", "location_id", \
+            "longitude", "latitude", "location_description", "value1", \
+            "value2", "unit_deviation", "device_sn", "device_description", \
+            "block_id", "block_description"
+    from rdb."raw_data"
+    """
 
+    outputquery = "COPY ({0}) TO STDOUT WITH CSV DELIMITER ';'".format(query)
+
+    with conn.cursor() as cur:
+        with open(filename, 'w') as f:
+            cur.copy_expert(outputquery, f)

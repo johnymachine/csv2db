@@ -127,14 +127,21 @@ class MainWindow(QMainWindow):
         dialog.setNameFilters(['CSV soubory (*.csv)', 'Všechny soubory (*)'])
         if dialog.exec_():
             filename = dialog.selectedFiles()[0]
-            filename = '/home/sharp/drive/tul/n1-l/rdb/csv2db/testdata/in.csv'
             # TODO progress bar, exception handling
             with CsvReader(filename, CsvDialect) as csvreader:
                 for rows in csvreader.readall():
                     db.import_data(self.conn, rows)
 
     def on_action_Export_triggered(self):
-        print('export')
+        caption = 'Export dat do csv'
+        dialog = QFileDialog(self, caption)
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        dialog.setNameFilter('CSV soubory (*.csv)')
+        dialog.setDefaultSuffix('csv')
+        if dialog.exec_():
+            filename = dialog.selectedFiles()[0]
+            db.export_data(self.conn, filename)
 
     def __del__(self):
         del self.conn
