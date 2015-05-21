@@ -41,3 +41,12 @@ def get_devices(conn):
     with conn.cursor() as cur:
         cur.execute(sql)
         return cur.fetchall()
+    conn.commit()
+
+
+def remove_device(conn, serial_number):
+    sql = "delete from devices where serial_number = (%s)"
+    with conn.cursor() as cur:
+        cur.execute(sql, (serial_number,))
+    conn.commit()
+

@@ -44,13 +44,8 @@ class ViewRemoveTableWidget(QWidget):
         layout.addWidget(self.button)
         self.setLayout(layout)
 
-    def setData(self, tableData, columnHeaders=None):
-        self.table.setColumnCount(len(tableData[0]))
+    def setData(self, tableData):
         self.table.setRowCount(len(tableData))
-
-        if columnHeaders:
-            self.table.setHorizontalHeaderLabels(columnHeaders)
-        self.table.horizontalHeader().setVisible(bool(columnHeaders))
 
         for i, rowData in enumerate(tableData):
             for j, columnData in enumerate(rowData):
@@ -59,6 +54,11 @@ class ViewRemoveTableWidget(QWidget):
                 self.table.setItem(i, j, item)
 
         self.table.resizeColumnToContents(0)
+
+    def setColumnHeaders(self, columnHeaders):
+        self.table.setColumnCount(len(columnHeaders))
+        self.table.setHorizontalHeaderLabels(columnHeaders)
+        self.table.horizontalHeader().setVisible(True)
 
     def setIdColumnIndex(self, columnIndex=0):
         """Sets the index of column which contains the identifier of row."""
@@ -82,6 +82,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     widget = ViewRemoveTableWidget()
+    widget.setColumnHeaders(["Name", "Hair Color"])
     widget.show()
 
     tableData = [
@@ -89,8 +90,6 @@ if __name__ == '__main__':
         ("Neptun", 'aquamarine'),
         ("Ferdinand", 'springgreen')
     ]
-    columnHeaders = ["Name", "Hair Color"]
-
     widget.setData(tableData, columnHeaders)
 
     @pyqtSlot(str)
