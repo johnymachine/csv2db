@@ -21,6 +21,7 @@ class MainWindow(QMainWindow):
         self.setupUi(self)
 
         self.populateDevices()
+        self.populateBlocks()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -37,7 +38,20 @@ class MainWindow(QMainWindow):
         self.devicesWidget.setColumnHeaders(['Sériové číslo', 'Název'])
         self.devicesWidget.removeRow.connect(self.on_devicesWidget_removeRow)
         self.devicesWidget.button.setText('Odstranit přístroj')
-        self.tabsWidget.addTab(self.devicesWidget, "Přístroje")
+        self.devicesWidget.label.setText('Přístroje')
+
+        self.blocksWidget = ViewRemoveTableWidget(self.tabsWidget)
+        self.blocksWidget.setColumnHeaders(['Identifikátor', 'Název'])
+        self.blocksWidget.removeRow.connect(self.on_blocksWidget_removeRow)
+        self.blocksWidget.button.setText('Odstranit měřící blok')
+        self.blocksWidget.label.setText('Měřící bloky')
+
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.devicesWidget)
+        layout.addWidget(self.blocksWidget)
+        widget.setLayout(layout)
+        self.tabsWidget.addTab(widget, "Přístroje a měřící bloky")
 
         self.setCentralWidget(self.tabsWidget)
 
@@ -46,18 +60,40 @@ class MainWindow(QMainWindow):
     def populateDevices(self):
         self.devicesWidget.setData(db.get_devices(self.conn))
 
-    @pyqtSlot(str)
-    def on_devicesWidget_removeRow(self, id_):
-        title = "Odstranit přístroj %s?" % id_
-        text = "Odstraněním přístroje se smažou i všechny jím naměřené \
-                hodnoty.\n\nOpravdu chcete odstranit přístroj %s?" % id_
+    @pyqtSlot(int)
+    def on_devicesWidget_removeRow(self, iRow):
+        data = self.devicesWidget.getRowData(iRow)
+        serial_number = data[0]
+        description = data[1]
+        title = "Odstranit přístroj %s (%s)?" % (description, serial_number)
+        text = "Odstraněním přístroje se smažou i všechny jím naměřené " + \
+                "hodnoty.\n\nOpravdu chcete odstranit přístroj %s (%s)?" % \
+                (description, serial_number)
         buttons = QMessageBox.Yes | QMessageBox.No
         msgBox = QMessageBox(QMessageBox.Question, title, text, buttons)
         
         if msgBox.exec_() == QMessageBox.Yes:
-            db.remove_device(self.conn, id_)
+            db.remove_device(self.conn, serial_number)
             self.populateDevices()
   
+    def populateBlocks(self):
+        self.blocksWidget.setData(db.get_blocks(self.conn))
+
+    @pyqtSlot(int)
+    def on_blocksWidget_removeRow(self, iRow):
+        data = self.blocksWidget.getRowData(iRow)
+        id_ = data[0]
+        description = data[1]
+        title = "Odstranit měřící blok %s (%s)?" % (description, id_)
+        text = "Odstraněním měřícího bloku se smažou i všechny naměřené " + \
+                "hodnoty v rámci tohoto bloku.\n\nOpravdu chcete " + \
+                "odstranit měřící blok %s (%s)?" % (description, id_)
+        buttons = QMessageBox.Yes | QMessageBox.No
+        msgBox = QMessageBox(QMessageBox.Question, title, text, buttons)
+        
+        if msgBox.exec_() == QMessageBox.Yes:
+            db.remove_block(self.conn, id_)
+            self.populateBlocks()
 
     def __del__(self):
         del self.conn

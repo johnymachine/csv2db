@@ -12,34 +12,35 @@ Author: Tomas Krizek
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
-    QVBoxLayout, QPushButton, QAbstractItemView, QMessageBox)
+    QVBoxLayout, QPushButton, QAbstractItemView, QMessageBox, QLabel)
 
 
 class ViewRemoveTableWidget(QWidget):
 
-    removeRow = pyqtSignal(str)
+    removeRow = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super(ViewRemoveTableWidget, self).__init__(parent)
 
-        self.idColumnIndex = 0
-
+        self.label = QLabel(self)
         self.table = QTableWidget(self)
-
         self.button = QPushButton(self)
         self.button.clicked.connect(self.on_button_clicked)
 
         self.createGUI()
 
     def createGUI(self):
-        self.button.setText("Odstranit řádek")
+        self.label.setText("Název")
 
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
 
+        self.button.setText("Odstranit řádek")
+
         layout = QVBoxLayout()
+        layout.addWidget(self.label)
         layout.addWidget(self.table)
         layout.addWidget(self.button)
         self.setLayout(layout)
@@ -49,7 +50,7 @@ class ViewRemoveTableWidget(QWidget):
 
         for i, rowData in enumerate(tableData):
             for j, columnData in enumerate(rowData):
-                item = QTableWidgetItem(columnData)
+                item = QTableWidgetItem(str(columnData))
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 self.table.setItem(i, j, item)
 
@@ -60,18 +61,17 @@ class ViewRemoveTableWidget(QWidget):
         self.table.setHorizontalHeaderLabels(columnHeaders)
         self.table.horizontalHeader().setVisible(True)
 
-    def setIdColumnIndex(self, columnIndex=0):
-        """Sets the index of column which contains the identifier of row."""
-        self.idColumnIndex = columnIndex
+    def getRowData(self, iRow):
+        data = []
+        for iCol in range(0, self.table.columnCount()):
+            data.append(self.table.item(iRow, iCol).text())
+        return tuple(data)
 
     @pyqtSlot()
     def on_button_clicked(self):
         selected = self.table.selectionModel().selectedRows()
         if selected:
-            row = selected[0].row()
-            column = self.idColumnIndex
-            id_ = self.table.item(row, column).text()
-            self.removeRow.emit(id_)
+            self.removeRow.emit(selected[0].row())
 
 
 if __name__ == '__main__':
@@ -92,10 +92,10 @@ if __name__ == '__main__':
     ]
     widget.setData(tableData, columnHeaders)
 
-    @pyqtSlot(str)
-    def on_widget_removeRow(id_):
+    @pyqtSlot(int)
+    def on_widget_removeRow(index):
         msgBox = QMessageBox()
-        msgBox.setText(id_)
+        msgBox.setText(index)
         msgBox.exec_()
 
     widget.removeRow.connect(on_widget_removeRow)

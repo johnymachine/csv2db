@@ -41,12 +41,25 @@ def get_devices(conn):
     with conn.cursor() as cur:
         cur.execute(sql)
         return cur.fetchall()
-    conn.commit()
 
 
 def remove_device(conn, serial_number):
     sql = "delete from devices where serial_number = (%s)"
     with conn.cursor() as cur:
         cur.execute(sql, (serial_number,))
+    conn.commit()
+
+
+def get_blocks(conn):
+    sql = "select id, description from blocks"
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        return cur.fetchall()
+
+
+def remove_block(conn, id_):
+    sql = "delete from blocks where id = (%s)"
+    with conn.cursor() as cur:
+        cur.execute(sql, (id_,))
     conn.commit()
 
