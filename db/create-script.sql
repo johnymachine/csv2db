@@ -53,6 +53,7 @@ create table "locations" (
     "description" character varying(250)
 ) with (oids=false);
 
+alter table "raw_data" add constraint "pk_raw_data" primary key ("timestamp", "unit", "location_id", "longitude", "latitude", "location_description", "value1", "value2", "unit_deviation", "device_sn", "device_description", "block_id", "block_description");
 alter table "measurements" add constraint "pk_measurements" primary key ("id");
 alter table "units" add constraint "pk_units" primary key ("unit");
 alter table "devices" add constraint "pk_devices" primary key ("serial_number");
