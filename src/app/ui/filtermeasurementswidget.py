@@ -8,17 +8,21 @@ Filter Widget for measurements
 Author: Tomas Krizek
 """
 
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimeZone, QDateTime
 from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
     QVBoxLayout, QPushButton, QAbstractItemView, QMessageBox, QLabel)
 
-from PyQt5.QtCore import QDate, QSize, Qt
+from PyQt5.QtCore import QDate, QSize, Qt, QTimeZone
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
         QListView, QListWidget, QListWidgetItem, QPushButton, QSpinBox,
         QStackedWidget, QVBoxLayout, QWidget, QFormLayout, QDoubleSpinBox)
 
+from datetime import datetime
+import calendar
+
+TZ = QTimeZone('Europe/Prague')
 
 class BasicFilterPage(QWidget):
     def __init__(self, parent=None):
@@ -28,6 +32,10 @@ class BasicFilterPage(QWidget):
         self.deviceCombo = QComboBox()
         self.unitCombo = QComboBox()
 
+        self.combos = {'block': self.blockCombo, \
+                       'device': self.deviceCombo, \
+                       'unit': self.unitCombo}
+
         groupLayout = QFormLayout()
         groupLayout.addRow("Skupina měření:", self.blockCombo)
         groupLayout.addRow("Přístroj:", self.deviceCombo)
@@ -36,9 +44,9 @@ class BasicFilterPage(QWidget):
         filterGroup = QGroupBox("Základní filtry")
         filterGroup.setLayout(groupLayout)
 
-        self.valuesOffCheckbox = QCheckBox()
+        self.deviatedValuesCheckbox = QCheckBox()
         valuesLayout = QFormLayout()
-        valuesLayout.addRow("Mimo odchylku:", self.valuesOffCheckbox)
+        valuesLayout.addRow("Mimo odchylku:", self.deviatedValuesCheckbox)
 
         valuesGroup = QGroupBox("Hodnoty")
         valuesGroup.setLayout(valuesLayout)
@@ -51,21 +59,42 @@ class BasicFilterPage(QWidget):
 
         self.setLayout(layout)
 
-    def setBlockOptions(self, blockOptions):
-        self.blockCombo.clear()
-        blockOptions.insert(0, '')
-        self.blockCombo.addItems([str(option) for option in blockOptions])
+    def setComboOptions(self, combo, options, selected=''):
+        options.insert(0, '')
+        options = [str(option) for option in options]
 
-    def setDeviceOptions(self, deviceOptions):
-        self.deviceCombo.clear()
-        deviceOptions.insert(0, '')
-        self.deviceCombo.addItems([str(option) for option in deviceOptions])
+        index = options.index(str(selected))
+        if index == -1:
+            index = 0
 
-    def setUnitOptions(self, unitOptions):
-        self.unitCombo.clear()
-        unitOptions.insert(0, '')
-        self.unitCombo.addItems([str(option) for option in unitOptions])
+        combo.clear()
+        combo.addItems(options)
+        combo.setCurrentIndex(index)
 
+    def getFilter(self):
+        filter_ = {}
+
+        for name, combo in self.combos.items():
+            selected = combo.currentText()
+            if selected:
+                filter_[name] = selected
+
+        filter_['deviated_values'] = bool(self.deviatedValuesCheckbox.checkState())
+
+        return filter_
+
+    def initControls(self, options, filter_):
+        for name, combo in self.combos.items():
+            try:
+                comboOptions = options[name]
+            except KeyError:
+                continue
+            else:
+                selectedOption = filter_.get(name, '')
+                self.setComboOptions(combo, comboOptions, selectedOption)
+
+        checked = filter_.get('deviated_values', False)
+        self.deviatedValuesCheckbox.setChecked(checked)
 
 
 class DateTimeFilterPage(QWidget):
@@ -79,16 +108,42 @@ class DateTimeFilterPage(QWidget):
         groupLayout.addRow("Od:", self.fromEdit)
         groupLayout.addRow("Do:", self.toEdit)
 
-        group = QGroupBox("Datum a čas")
-        group.setCheckable(True)
-        group.setChecked(False)
-        group.setLayout(groupLayout)
+        self.group = QGroupBox("Datum a čas")
+        self.group.setCheckable(True)
+        self.group.setChecked(False)
+        self.group.setLayout(groupLayout)
 
         layout = QVBoxLayout()
-        layout.addWidget(group)
+        layout.addWidget(self.group)
         layout.addStretch(1)
 
         self.setLayout(layout)
+
+    def initControls(self, filter_):
+        self.group.setChecked(False)
+
+        for key in ['start_datetime', 'end_datetime']:
+            if key in filter_:
+                self.group.setChecked(True)
+                break
+
+        start = filter_.get('start_datetime', datetime.utcnow())
+        start = calendar.timegm(start.timetuple())
+        end = filter_.get('end_datetime', datetime.utcnow())
+        end = calendar.timegm(end.timetuple())
+        self.fromEdit.setDateTime(QDateTime.fromTime_t(start, TZ))
+        self.toEdit.setDateTime(QDateTime.fromTime_t(end, TZ))
+
+    def getFilter(self):
+        filter_ = {}
+
+        if self.group.isChecked():
+            start = self.fromEdit.dateTime().toTime_t()
+            end = self.toEdit.dateTime().toTime_t()
+            filter_['start_datetime'] = datetime.utcfromtimestamp(start)
+            filter_['end_datetime'] = datetime.utcfromtimestamp(end)
+
+        return filter_
 
 
 class LocationFilterPage(QWidget):
@@ -98,35 +153,63 @@ class LocationFilterPage(QWidget):
         self.xSpinBox = QDoubleSpinBox()
         self.xSpinBox.setMinimum(float('-inf'))
         self.xSpinBox.setMaximum(float('inf'))
-        
+        self.xSpinBox.setDecimals(6)
+
         self.ySpinBox = QDoubleSpinBox()
         self.ySpinBox.setMinimum(float('-inf'))
         self.ySpinBox.setMaximum(float('inf'))
+        self.ySpinBox.setDecimals(6)
 
         self.tolSpinBox = QDoubleSpinBox()
         self.tolSpinBox.setMinimum(float('-inf'))
         self.tolSpinBox.setMaximum(float('inf'))
+        self.tolSpinBox.setDecimals(6)
 
         groupLayout = QFormLayout()
         groupLayout.addRow("X:", self.xSpinBox)
         groupLayout.addRow("Y:", self.ySpinBox)
         groupLayout.addRow("Tolerance:", self.tolSpinBox)
 
-        group = QGroupBox("Lokace")
-        group.setCheckable(True)
-        group.setChecked(False)
-        group.setLayout(groupLayout)
+        self.group = QGroupBox("Lokace")
+        self.group.setCheckable(True)
+        self.group.setChecked(False)
+        self.group.setLayout(groupLayout)
 
         layout = QVBoxLayout()
-        layout.addWidget(group)
+        layout.addWidget(self.group)
         layout.addStretch(1)
 
         self.setLayout(layout)
 
+    def initControls(self, filter_):
+        self.group.setChecked(False)
+
+        for key in ['loc_x', 'loc_y', 'loc_tol']:
+            if key in filter_:
+                self.group.setChecked(True)
+                break
+
+        self.xSpinBox.setValue(filter_.get('loc_x', 0))
+        self.ySpinBox.setValue(filter_.get('loc_y', 0))
+        self.tolSpinBox.setValue(filter_.get('loc_tol', 0))
+
+    def getFilter(self):
+        filter_ = {}
+
+        if self.group.isChecked():
+            filter_['loc_x'] = self.xSpinBox.value()
+            filter_['loc_y'] = self.ySpinBox.value()
+            filter_['loc_tol'] = self.tolSpinBox.value()
+
+        return filter_
+
 
 class ConfigDialog(QDialog):
+
     def __init__(self, parent=None):
         super(ConfigDialog, self).__init__(parent)
+
+        self.accepted.connect(self.createFilter)
 
         self.contentsWidget = QListWidget()
         self.contentsWidget.setViewMode(QListView.IconMode)
@@ -145,12 +228,13 @@ class ConfigDialog(QDialog):
         self.pagesWidget.addWidget(self.locationFilterPage)
         self.pagesWidget.setMinimumHeight(360)
 
-        closeButton = QPushButton("Close")
+        rejectButton = QPushButton("Storno")
+        rejectButton.clicked.connect(self.reject)
+        acceptButton = QPushButton("OK")
+        acceptButton.clicked.connect(self.accept)
 
         self.createIcons()
         self.contentsWidget.setCurrentRow(0)
-
-        closeButton.clicked.connect(self.close)
 
         horizontalLayout = QHBoxLayout()
         horizontalLayout.addWidget(self.contentsWidget)
@@ -158,7 +242,8 @@ class ConfigDialog(QDialog):
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.addStretch(1)
-        buttonsLayout.addWidget(closeButton)
+        buttonsLayout.addWidget(acceptButton)
+        buttonsLayout.addWidget(rejectButton)
 
         layout = QVBoxLayout()
         layout.addLayout(horizontalLayout)
@@ -169,6 +254,11 @@ class ConfigDialog(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle("Filtrování výsledků")
+
+    def initControls(self, options, filter_):
+        self.basicFilterPage.initControls(options, filter_)
+        self.timeFilterPage.initControls(filter_)
+        self.locationFilterPage.initControls(filter_)
 
     def changePage(self, current, previous):
         if not current:
@@ -197,6 +287,13 @@ class ConfigDialog(QDialog):
 
         self.contentsWidget.currentItemChanged.connect(self.changePage)
 
+    @pyqtSlot()
+    def createFilter(self):
+        self.filter = self.basicFilterPage.getFilter()
+        self.filter.update(self.timeFilterPage.getFilter())
+        self.filter.update(self.locationFilterPage.getFilter())
+        print(self.filter)        
+
 
 if __name__ == '__main__':
 
@@ -204,7 +301,13 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     dialog = ConfigDialog()
-    dialog.basicFilterPage.setBlockOptions([2,3, 4, 5])
-    dialog.basicFilterPage.setDeviceOptions(['dsa2', 'rm -rf'])
-    dialog.basicFilterPage.setUnitOptions(['A', 'm^2'])
-    sys.exit(dialog.exec_())    
+    
+    options = {'block': [1, 2, 3, 4, 5], \
+               'device': ['rm2-x', 'zc-3d', 'qap'], \
+               'unit': ['Hz', 'A', 'm^2']}
+    filter_ = {'block': 4, 'unit': 'Hz', 'deviated_values': True, \
+               'start_datetime': datetime(2015,5,7,10), 'loc_x': -32.4255}
+
+    dialog.initControls(options, filter_)
+
+    sys.exit(dialog.exec_())
