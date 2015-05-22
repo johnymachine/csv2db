@@ -3,7 +3,7 @@
 
 drop schema if exists rdb cascade;
 create schema rdb;
-set schema rdb;
+set schema 'rdb';
 
 create table measurements (
     id serial,

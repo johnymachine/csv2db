@@ -1,6 +1,6 @@
 -- psql -h 147.230.21.34 -U student -d rdb2015_danielmadera -f create-triggers-views.sql
 
-set schema rdb;
+set schema 'rdb';
 
 drop trigger if exists insert_raw_data on raw_data_view;
 drop function if exists insert_raw_data();
