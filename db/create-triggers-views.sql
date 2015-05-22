@@ -29,22 +29,47 @@ create view raw_data_view as
 
 create function insert_raw_data() returns trigger as $insert_raw_data$
     begin
-        -- TODO: Roll back all inserts if insert to measurement table fails.
         -- units
-        insert into units (unit, deviation) 
-            values (new.unit, new.deviation);
+        begin
+            insert into units (unit, deviation) values (new.unit, new.deviation);
+        exception when unique_violation then
+            raise notice 'unit already exists';
+            null;
+        end;
+
         -- devices
-        insert into devices (serial_number, description) 
-            values (new.serial_number, new.device_description);
+        begin
+            insert into devices (serial_number, description) values (new.serial_number, new.device_description);
+        exception when unique_violation then
+            raise notice 'device already exists';
+            null;
+        end;
+
         -- blocks
-        insert into blocks (id, description) 
-            values (new.block_id, new.block_description);
+        begin
+            insert into blocks (id, description) values (new.block_id, new.block_description);
+        exception when unique_violation then
+            raise notice 'block already exists';
+            null;
+        end;
+
         -- locations
-        insert into locations (id, longitude, latitude, description) 
-            values (new.location_id, new.longitude, new.latitude, new.location_description);
+        begin
+            insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
+        exception when unique_violation then
+            raise notice 'location already exists';
+            null;
+        end;
+
         -- measurements
-        insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id)
-            values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);
+        begin
+            insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);
+        exception when unique_violation then
+            raise notice 'record of this measurement already exists';
+            rollback; -- insert failed no need to create unit, device, block or location so roll inserts back
+        end;
+        
+        commit;
     end;
 $insert_raw_data$ language plpgsql;
 

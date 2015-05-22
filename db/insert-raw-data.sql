@@ -1,4 +1,4 @@
--- psql -h 147.230.21.34 -u student -d rdb2015_danielmadera -f insert-raw-data.sql
+-- psql -h 147.230.21.34 -U student -d rdb2015_danielmadera -f insert-raw-data.sql
 
 insert into raw_data_view (
         created, 
