@@ -1,6 +1,6 @@
--- psql -h 147.230.21.34 -U student -d RDB2015_DanielMadera -f create-view-raw-data.sql
+-- psql -h 147.230.21.34 -U student -d rdb2015_danielmadera -f create-triggers-views.sql
 
-set schema 'rdb';
+set schema rdb;
 
 drop trigger if exists insert_raw_data on raw_data_view;
 drop function if exists insert_raw_data();
@@ -29,6 +29,7 @@ create view raw_data_view as
 
 create function insert_raw_data() returns trigger as $insert_raw_data$
     begin
+        -- TODO: Roll back all inserts if insert to measurement table fails.
         -- units
         insert into units (unit, deviation) 
             values (new.unit, new.deviation);
@@ -51,4 +52,3 @@ create trigger insert_raw_data
     instead of insert on raw_data_view
     for each row
     execute procedure insert_raw_data();
-

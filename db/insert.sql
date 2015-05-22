@@ -1,5 +1,5 @@
--- psql -h 127.0.0.1 -U postgres -d RDB2015_DanielMadera -f insert.sql
--- psql -h 147.230.21.34 -U student -d RDB2015_DanielMadera -f insert.sql
+-- psql -h 127.0.0.1 -U postgres -d rdb2015_danielmadera -f insert.sql
+-- psql -h 147.230.21.34 -U student -d rdb2015_danielmadera -f insert.sql
 
 set schema 'rdb';
 
