@@ -6,9 +6,7 @@ User Interface
 View Remove Table Widget for devices, blocks of measurements
 
 Author: Tomas Krizek
-
 """
-
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
