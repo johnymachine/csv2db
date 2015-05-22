@@ -28,7 +28,8 @@ create table "measurements" (
     "value2" real not null,
     "unit" character varying(30) not null,
     "block_id" integer not null,
-    "device_sn" character varying(80) not null
+    "device_sn" character varying(80) not null,
+    "location_id" integer not null
 ) with (oids=false);
 
 create table "units" (
@@ -63,7 +64,7 @@ alter table "locations" add constraint "pk_locations" primary key ("id");
 alter table "measurements" add constraint "measurement_unit" foreign key ("unit") references "units" ("unit") on delete restrict on update cascade;
 alter table "measurements" add constraint "measurement_block" foreign key ("block_id") references "blocks" ("id") on delete cascade on update cascade;
 alter table "measurements" add constraint "measurement_device" foreign key ("device_sn") references "devices" ("serial_number") on delete restrict on update cascade;
-alter table "measurements" add constraint "measurement_location" foreign key ("block_id") references "locations" ("id") on delete restrict on update cascade;
+alter table "measurements" add constraint "measurement_location" foreign key ("location_id") references "locations" ("id") on delete restrict on update cascade;
 
 create index "ix_measurement_unit" on "measurements" ("unit");
 create index "ix_measurement_block" on "measurements" ("block_id");
