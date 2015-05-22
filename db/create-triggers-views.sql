@@ -2,6 +2,10 @@
 
 set schema 'rdb';
 
+drop rule if exists units_on_duplicate_ignore on units;
+drop rule if exists devices_on_duplicate_ignore on devices;
+drop rule if exists blocks_on_duplicate_ignore on blocks;
+drop rule if exists locations_on_duplicate_ignore on locations;
 drop trigger if exists insert_raw_data on raw_data_view;
 drop function if exists insert_raw_data();
 drop view if exists raw_data_view;
@@ -29,47 +33,19 @@ create view raw_data_view as
 
 create function insert_raw_data() returns trigger as $insert_raw_data$
     begin
+        raise notice 'called insert data function';
         -- units
-        begin
-            insert into units (unit, deviation) values (new.unit, new.deviation);
-        exception when unique_violation then
-            raise notice 'unit already exists';
-            null;
-        end;
-
+        insert into units (unit, deviation) values (new.unit, new.unit_deviation);
         -- devices
-        begin
-            insert into devices (serial_number, description) values (new.serial_number, new.device_description);
-        exception when unique_violation then
-            raise notice 'device already exists';
-            null;
-        end;
-
+        insert into devices (serial_number, description) values (new.serial_number, new.device_description);
         -- blocks
-        begin
-            insert into blocks (id, description) values (new.block_id, new.block_description);
-        exception when unique_violation then
-            raise notice 'block already exists';
-            null;
-        end;
-
+        insert into blocks (id, description) values (new.block_id, new.block_description);
         -- locations
-        begin
-            insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
-        exception when unique_violation then
-            raise notice 'location already exists';
-            null;
-        end;
-
+        insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
         -- measurements
-        begin
-            insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);
-        exception when unique_violation then
-            raise notice 'record of this measurement already exists';
-            rollback; -- insert failed no need to create unit, device, block or location so roll inserts back
-        end;
-        
-        commit;
+        insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);
+        raise notice 'successfully inserted';
+        return null;
     end;
 $insert_raw_data$ language plpgsql;
 
@@ -77,3 +53,23 @@ create trigger insert_raw_data
     instead of insert on raw_data_view
     for each row
     execute procedure insert_raw_data();
+
+create rule units_on_duplicate_ignore as on insert to units
+    where exists (
+        select 1 from units where unit = new.unit
+    ) do instead nothing;
+
+create rule devices_on_duplicate_ignore as on insert to devices
+    where exists (
+        select 1 from devices where serial_number = new.serial_number
+    ) do instead nothing;
+
+create rule blocks_on_duplicate_ignore as on insert to blocks
+    where exists (
+        select 1 from blocks where id = new.id
+    ) do instead nothing;
+
+create rule locations_on_duplicate_ignore as on insert to locations
+    where exists (
+        select 1 from locations where id = new.id
+    ) do instead nothing;

@@ -1,11 +1,13 @@
 -- psql -h 147.230.21.34 -U student -d rdb2015_danielmadera -f insert-raw-data.sql
 
+set schema 'rdb';
+
 insert into raw_data_view (
         created, 
         unit, 
         location_id, 
-        longitute, 
-        latitute, 
+        longitude, 
+        latitude, 
         location_description, 
         value1, 
         value2, 
@@ -15,17 +17,17 @@ insert into raw_data_view (
         block_id, 
         block_description
     ) values (
-        '1431528412',
+        '2015-05-15 15:15:00',
         'A',
-        '2',
-        '31813.000',
-        '2116.000',
+        2,
+        31813.000,
+        2116.000,
         'prutok b2',
-        '18041.000',
-        '129368.000',
-        '0.015',
+        180422.000,
+        129.000,
+        0.015,
         '2548DESWE-87-874/4',
         'WEIGHT METER',
-        '6',
+        6,
         'Voltage in dam 3'
     );
