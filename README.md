@@ -3,7 +3,7 @@ RDB - Školni projekt
 
 ## Školní databáze
 ```
-	psql -h 147.230.21.34 -U student -d postgres
+	psql -h 147.230.21.34 -U student -d RDB2015_DanielMadera
 	# jmeno databaze RDB2015_DanielMadera
 	# heslo stejné jako na cvičení
 ```
