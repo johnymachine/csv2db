@@ -8,12 +8,14 @@ Pagination Controls
 Author: Tomas Krizek
 """
 
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QPushButton, QSpinBox)
 
 
 class PaginationControls(QWidget):
     PAGE_ROW_COUNT = 10
+
+    valueChanged = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super(PaginationControls, self).__init__(parent)
@@ -42,6 +44,7 @@ class PaginationControls(QWidget):
         self.endButton.setText(">>")
         self.endButton.clicked.connect(self.on_endButton_clicked)
 
+        self.counter.setMinimum(1)
         self.counter.valueChanged.connect(self.on_counter_valueChanged)
 
         layout = QHBoxLayout(self)
@@ -64,12 +67,14 @@ class PaginationControls(QWidget):
         if page == 0:
             self.startButton.setEnabled(False)
             self.prevButton.setEnabled(False)
-        elif page == self.counter.maximum():
+
+        if page == self.counter.maximum():
             self.endButton.setEnabled(False)
             self.nextButton.setEnabled(False)
 
     def setMaximum(self, maximum):
         self.counter.setMaximum(maximum)
+        self.updateControls()
 
     @pyqtSlot()
     def on_startButton_clicked(self):
@@ -90,6 +95,7 @@ class PaginationControls(QWidget):
     @pyqtSlot(int)
     def on_counter_valueChanged(self, value):
         self.updateControls()
+        self.valueChanged.emit(value)
 
 
 if __name__ == '__main__':
