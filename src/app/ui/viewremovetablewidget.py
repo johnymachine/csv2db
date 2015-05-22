@@ -88,7 +88,7 @@ if __name__ == '__main__':
         ("Neptun", 'aquamarine'),
         ("Ferdinand", 'springgreen')
     ]
-    widget.setData(tableData, columnHeaders)
+    widget.setData(tableData)
 
     @pyqtSlot(int)
     def on_widget_removeRow(index):

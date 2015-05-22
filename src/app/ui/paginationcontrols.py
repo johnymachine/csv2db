@@ -64,7 +64,7 @@ class PaginationControls(QWidget):
         self.endButton.setEnabled(True)
 
         # end conditions for button enables/disables
-        if page == 0:
+        if page == 1:
             self.startButton.setEnabled(False)
             self.prevButton.setEnabled(False)
 
@@ -78,7 +78,7 @@ class PaginationControls(QWidget):
 
     @pyqtSlot()
     def on_startButton_clicked(self):
-        self.counter.setValue(0)
+        self.counter.setValue(1)
 
     @pyqtSlot()
     def on_prevButton_clicked(self):
