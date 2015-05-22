@@ -33,7 +33,6 @@ create view raw_data_view as
 
 create function insert_raw_data() returns trigger as $insert_raw_data$
     begin
-        raise notice 'called insert data function';
         -- units
         insert into units (unit, deviation) values (new.unit, new.unit_deviation);
         -- devices
@@ -43,8 +42,7 @@ create function insert_raw_data() returns trigger as $insert_raw_data$
         -- locations
         insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
         -- measurements
-        insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);
-        raise notice 'successfully inserted';
+        insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);        
         return null;
     end;
 $insert_raw_data$ language plpgsql;
@@ -72,4 +70,13 @@ create rule blocks_on_duplicate_ignore as on insert to blocks
 create rule locations_on_duplicate_ignore as on insert to locations
     where exists (
         select 1 from locations where id = new.id
+    ) do instead nothing;
+
+create rule measurements_on_duplicate_ignore as on insert to measurements
+    where exists (
+        select 1 from measurements where 
+            created = new.created and value1 = new.value1 and
+            value2 = new.value2 and unit = new.unit and
+            block_id = new.block_id and device_sn = new.device_sn and
+            location_id = new.location_id
     ) do instead nothing;

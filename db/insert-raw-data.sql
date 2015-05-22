@@ -30,4 +30,34 @@ insert into raw_data_view (
         'WEIGHT METER',
         6,
         'Voltage in dam 3'
+    ),
+    (
+        '2015-05-15 15:15:00',
+        'A',
+        2,
+        31813.000,
+        2116.000,
+        'prutok b2',
+        12.000,
+        129.000,
+        0.015,
+        '2548DESWE-87-874/4',
+        'WEIGHT METER',
+        6,
+        'Voltage in dam 3'
+    ),
+    (
+        '2015-05-15 15:15:00',
+        'A',
+        2,
+        31813.000,
+        2116.000,
+        'prutok b2',
+        1222.000,
+        129.000,
+        0.015,
+        '2548DESWE-87-874/4',
+        'WEIGHT METER',
+        6,
+        'Voltage in dam 3'
     );
