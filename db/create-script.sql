@@ -5,25 +5,25 @@ drop schema if exists "rdb" cascade;
 create schema "rdb";
 set schema 'rdb';
 
-create table "raw_data" (
-    "timestamp" timestamp not null, 
-    "unit" character varying(30) not null,
-    "location_id" integer not null,
-    "longitude" real not null,
-    "latitude" real not null, 
-    "location_description" character varying(250),
-    "value1" real not null,
-    "value2" real not null,
-    "unit_deviation" real not null,
-    "device_sn" character varying(80) not null,
-    "device_description" character varying(250),
-    "block_id" integer not null,
-    "block_description" character varying(250)
-);
+-- create table "raw_data" (
+--     "created" timestamp not null, 
+--     "unit" character varying(30) not null,
+--     "location_id" integer not null,
+--     "longitude" real not null,
+--     "latitude" real not null, 
+--     "location_description" character varying(250),
+--     "value1" real not null,
+--     "value2" real not null,
+--     "unit_deviation" real not null,
+--     "device_sn" character varying(80) not null,
+--     "device_description" character varying(250),
+--     "block_id" integer not null,
+--     "block_description" character varying(250)
+-- );
 
 create table "measurements" (
     "id" serial,
-    "timestamp" timestamp not null,
+    "created" timestamp not null,
     "value1" real not null,
     "value2" real not null,
     "unit" character varying(30) not null,
@@ -54,7 +54,7 @@ create table "locations" (
     "description" character varying(250)
 ) with (oids=false);
 
-alter table "raw_data" add constraint "pk_raw_data" primary key ("timestamp", "unit", "location_id", "longitude", "latitude", "location_description", "value1", "value2", "unit_deviation", "device_sn", "device_description", "block_id", "block_description");
+-- alter table "raw_data" add constraint "pk_raw_data" primary key ("created", "unit", "location_id", "longitude", "latitude", "location_description", "value1", "value2", "unit_deviation", "device_sn", "device_description", "block_id", "block_description");
 alter table "measurements" add constraint "pk_measurements" primary key ("id");
 alter table "units" add constraint "pk_units" primary key ("unit");
 alter table "devices" add constraint "pk_devices" primary key ("serial_number");
