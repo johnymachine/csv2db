@@ -12,9 +12,10 @@ Author: Tomas Krizek
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QPushButton, QLabel,
     QDialog)
-from filterdialog import FilterDialog
 from copy import deepcopy
 from datetime import timezone
+
+from .filterdialog import FilterDialog
 
 
 class FilteringWidget(QWidget):

@@ -76,6 +76,14 @@ def remove_block(id_):
     conn.commit()
 
 
+def get_units():
+    QMutexLocker(conMutex)
+    sql = 'select "unit" from "units"'
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        return cur.fetchall()
+
+
 def import_data(data):
     """Performs multiple insert of data."""
     QMutexLocker(conMutex)

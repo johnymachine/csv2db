@@ -11,8 +11,8 @@ Author: Tomas Krizek
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
-from filteringwidget import FilteringWidget
-from paginatortablewidget import PaginatorTableWidget
+from .filteringwidget import FilteringWidget
+from .paginatortablewidget import PaginatorTableWidget
 
 
 class MeasurementsWidget(QWidget):
@@ -26,19 +26,22 @@ class MeasurementsWidget(QWidget):
         self.limit = 15
         self.filter = {}
 
-        self.filteringWidget = FilteringWidget()
-        self.filteringWidget.filterChanged.connect(self.on_filterChanged)
+        self.filtering = FilteringWidget()
+        self.filtering.filterChanged.connect(self.on_filterChanged)
 
         self.table = PaginatorTableWidget()
+        self.table.layout().setContentsMargins(0, 0, 0, 0)
         self.table.setPageRowCount(self.limit)
         self.table.requestData.connect(self.on_table_requestData)
         self.table.setColumnHeaders(['Datum a čas', 'Hodnota 1', 'Hodnota 2',
             'Rozdíl hodnot', 'Přístroj', 'Odchylka přístroje'])
 
         layout = QVBoxLayout()
-        layout.addWidget(self.filteringWidget)
+        layout.addWidget(self.filtering)
         layout.addWidget(self.table)
         self.setLayout(layout)
+
+        self.requestData.emit(self.filter, self.offset, self.limit)
 
     @pyqtSlot(int, int)
     def on_table_requestData(self, offset, limit):
@@ -58,10 +61,10 @@ class MeasurementsWidget(QWidget):
         self.table.setMaxRowCount(rowCount)
 
     def setFilterOptions(self, options):
-        self.filteringWidget.setOptions(options)
+        self.filtering.setOptions(options)
 
     def setFilter(self, filter_):
-        self.filteringWidget.setFilter(filter_)
+        self.filtering.setFilter(filter_)
 
 
 if __name__ == '__main__':

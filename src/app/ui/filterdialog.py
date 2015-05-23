@@ -255,6 +255,7 @@ class FilterDialog(QDialog):
 
         self.setLayout(layout)
 
+        self.setMinimumWidth(450)
         self.setWindowTitle("Filtrování výsledků")
 
     def initControls(self, options, filter_):

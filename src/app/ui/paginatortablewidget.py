@@ -13,8 +13,8 @@ from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
     QVBoxLayout, QAbstractItemView, QMessageBox)
 from math import ceil
 
-from paginationcontrols import PaginationControls
-from customtablewidget import CustomTableWidget
+from .paginationcontrols import PaginationControls
+from .customtablewidget import CustomTableWidget
 
 
 class PaginatorTableWidget(QWidget):

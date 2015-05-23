@@ -12,7 +12,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QTableWidget, QWidget,
     QVBoxLayout, QPushButton, QAbstractItemView, QLabel)
 
-from customtablewidget import CustomTableWidget
+from .customtablewidget import CustomTableWidget
 
 
 class DevicesWidget(QWidget):

@@ -12,8 +12,8 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QTableWidget, QWidget,
     QVBoxLayout, QPushButton, QAbstractItemView, QLabel)
 
-from filteringwidget import FilteringWidget
-from customtablewidget import CustomTableWidget
+from .filteringwidget import FilteringWidget
+from .customtablewidget import CustomTableWidget
 
 
 class BlocksWidget(QWidget):
@@ -25,7 +25,7 @@ class BlocksWidget(QWidget):
     def __init__(self, parent=None):
         super(BlocksWidget, self).__init__(parent)
 
-        self.filter = {}
+        self._filter = {}
 
         self.filtering = FilteringWidget()
         self.filtering.filterChanged.connect(self.on_filterChanged)
@@ -44,6 +44,8 @@ class BlocksWidget(QWidget):
         layout.addWidget(self.button)
         self.setLayout(layout)
 
+        self.requestData.emit(self._filter)
+
     def setData(self, tableData):
         self.table.setData(tableData)
 
@@ -55,8 +57,8 @@ class BlocksWidget(QWidget):
 
     @pyqtSlot(dict)
     def on_filterChanged(self, filter_):
-        self.filter = filter_
-        self.requestData.emit(self.filter)
+        self._filter = filter_
+        self.updateData()
 
     def setFilterOptions(self, options):
         self.filtering.setOptions(options)
@@ -67,6 +69,12 @@ class BlocksWidget(QWidget):
     @pyqtSlot(int, int)
     def on_table_doubleClick(self, iRow, iCol):
         self.requestDetail.emit(int(self.table.item(iRow, 0).text()))
+
+    def filter(self):
+        return self._filter
+
+    def updateData(self):
+        self.requestData.emit(self._filter)
 
 
 if __name__ == '__main__':
