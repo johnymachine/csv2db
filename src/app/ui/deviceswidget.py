@@ -9,33 +9,30 @@ Author: Tomas Krizek
 """
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
-    QVBoxLayout, QPushButton, QAbstractItemView, QMessageBox, QLabel)
+from PyQt5.QtWidgets import (QTableWidget, QWidget,
+    QVBoxLayout, QPushButton, QAbstractItemView, QLabel)
+
+from customtablewidget import CustomTableWidget
 
 
-class ViewRemoveTableWidget(QWidget):
+class DevicesWidget(QWidget):
 
     removeRow = pyqtSignal(int)
 
     def __init__(self, parent=None):
-        super(ViewRemoveTableWidget, self).__init__(parent)
+        super(DevicesWidget, self).__init__(parent)
 
         self.label = QLabel(self)
-        self.table = QTableWidget(self)
+        self.table = CustomTableWidget(self)
         self.button = QPushButton(self)
         self.button.clicked.connect(self.on_button_clicked)
-
-        self.createGUI()
-
-    def createGUI(self):
-        self.label.setText("Název")
 
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
 
-        self.button.setText("Odstranit řádek")
+        self.button.setText("Odstranit přístroj")
 
         layout = QVBoxLayout()
         layout.addWidget(self.label)
@@ -44,26 +41,13 @@ class ViewRemoveTableWidget(QWidget):
         self.setLayout(layout)
 
     def setData(self, tableData):
-        self.table.setRowCount(len(tableData))
-
-        for i, rowData in enumerate(tableData):
-            for j, columnData in enumerate(rowData):
-                item = QTableWidgetItem(str(columnData))
-                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                self.table.setItem(i, j, item)
-
-        self.table.resizeColumnToContents(0)
+        self.table.setData(tableData)
 
     def setColumnHeaders(self, columnHeaders):
-        self.table.setColumnCount(len(columnHeaders))
-        self.table.setHorizontalHeaderLabels(columnHeaders)
-        self.table.horizontalHeader().setVisible(True)
+        self.table.setColumnHeaders(columnHeaders)
 
     def getRowData(self, iRow):
-        data = []
-        for iCol in range(0, self.table.columnCount()):
-            data.append(self.table.item(iRow, iCol).text())
-        return tuple(data)
+        self.table.getRowData(iRow)
 
     @pyqtSlot()
     def on_button_clicked(self):
@@ -75,11 +59,11 @@ class ViewRemoveTableWidget(QWidget):
 if __name__ == '__main__':
 
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QMessageBox
 
     app = QApplication(sys.argv)
 
-    widget = ViewRemoveTableWidget()
+    widget = DevicesWidget()
     widget.setColumnHeaders(["Name", "Hair Color"])
     widget.show()
 
@@ -93,7 +77,7 @@ if __name__ == '__main__':
     @pyqtSlot(int)
     def on_widget_removeRow(index):
         msgBox = QMessageBox()
-        msgBox.setText(index)
+        msgBox.setText(str(index))
         msgBox.exec_()
 
     widget.removeRow.connect(on_widget_removeRow)

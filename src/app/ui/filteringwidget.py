@@ -12,7 +12,7 @@ Author: Tomas Krizek
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QPushButton, QLabel,
     QDialog)
-from filtermeasurementswidget import FilterDialog
+from filterdialog import FilterDialog
 from copy import deepcopy
 from datetime import timezone
 
@@ -62,11 +62,11 @@ class FilteringWidget(QWidget):
     def __init__(self, parent=None):
         super(FilteringWidget, self).__init__(parent)
 
-        self.filter = {}
+        self._filter = {}
 
         self.label = QLabel(self)
         self.label.setWordWrap(True)
-        self.label.setText(FilteringWidget.filterToText(self.filter))
+        self.label.setText(FilteringWidget.filterToText(self._filter))
 
         self.changeFilter = QPushButton(self)
         self.changeFilter.setText("Upravit filtr")
@@ -79,7 +79,7 @@ class FilteringWidget(QWidget):
         layout = QHBoxLayout()
         layout.addWidget(QLabel("Aktivní filtr: "))
         layout.addWidget(self.label)
-        layout.addStretch(1)
+        layout.setStretch(1, 1)
         layout.addWidget(self.changeFilter)
         layout.addWidget(self.removeFilter)
         self.setLayout(layout)
@@ -89,7 +89,7 @@ class FilteringWidget(QWidget):
     @pyqtSlot()
     def on_changeFilter_clicked(self):
         filterDialog = FilterDialog()
-        filterDialog.initControls(options, self.filter)
+        filterDialog.initControls(self.options, self._filter)
 
         if filterDialog.exec_() == QDialog.Accepted:
             self.setFilter(filterDialog.filter())
@@ -99,14 +99,18 @@ class FilteringWidget(QWidget):
         self.setFilter({})
 
     def setFilter(self, filter_):
-        self.filter = filter_
+        self._filter = filter_
         self.onFilterChange()
 
     def setOptions(self, options):
         self.options = options
 
     def onFilterChange(self):
-        self.label.setText(FilteringWidget.filterToText(self.filter))
+        self.label.setText(FilteringWidget.filterToText(self._filter))
+        self.filterChanged.emit(self._filter)
+
+    def filter(self):
+        return self._filter
 
 
 def utc_to_local(utc_dt):

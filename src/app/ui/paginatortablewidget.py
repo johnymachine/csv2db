@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
 from math import ceil
 
 from paginationcontrols import PaginationControls
+from customtablewidget import CustomTableWidget
 
 
 class PaginatorTableWidget(QWidget):
@@ -24,7 +25,7 @@ class PaginatorTableWidget(QWidget):
     def __init__(self, parent=None):
         super(PaginatorTableWidget, self).__init__(parent)
 
-        self.table = QTableWidget(self)
+        self.table = CustomTableWidget(self)
         self.controls = PaginationControls(self)
 
         self._maxRowCount = 0
@@ -70,7 +71,12 @@ class PaginatorTableWidget(QWidget):
         offset = (value - 1) * self._pageRowCount
         limit = self._pageRowCount
         self.requestData.emit(offset, limit)
-        print("%s, %s" % (offset, limit))
+
+    def setData(self, data):
+        self.table.setData(data)
+
+    def setColumnHeaders(self, columnHeaders):
+        self.table.setColumnHeaders(columnHeaders)
 
 
 if __name__ == '__main__':
