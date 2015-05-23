@@ -42,12 +42,22 @@ create table locations (
     description character varying(250)
 ) with (oids=false);
 
+create table logs (
+    id serial,
+    created timestamp not null default now(),
+    operation character (6) not null,
+    username varchar(30) not null,
+    tablename varchar(30) not null,
+    description varchar(250)
+);
+
 -- ## CONSTRAINTS ## --
 alter table measurements add constraint pk_measurements primary key (id);
 alter table units add constraint pk_units primary key (unit);
 alter table devices add constraint pk_devices primary key (serial_number);
 alter table blocks add constraint pk_blocks primary key (id);
 alter table locations add constraint pk_locations primary key (id);
+alter table logs add constraint pk_logs primary key (id);
 
 alter table measurements add constraint measurement_unit foreign key (unit) references units (unit) on delete restrict on update cascade;
 alter table measurements add constraint measurement_block foreign key (block_id) references blocks (id) on delete cascade on update cascade;
@@ -108,22 +118,22 @@ create or replace function insert_raw_data() returns trigger as $insert_raw_data
         select * into l from locations where locations.id = new.location_id;
 
         if u is not null and u.deviation != new.unit_deviation then
-            raise notice 'row is not consistent because of unit';
+            -- raise notice 'row is not consistent because of unit';
             return null;
         end if;        
 
         if d is not null and d.description != new.device_description then
-            raise notice 'row is not consistent because of device';
+            -- raise notice 'row is not consistent because of device';
             return null;
         end if;
 
         if b is not null and b.description != new.block_description then
-            raise notice 'row is not consistent because of block';
+            -- raise notice 'row is not consistent because of block';
             return null;
         end if;
 
         if l is not null and (l.longitude != new.longitude or l.latitude != new.latitude or l.description != new.location_description) then
-            raise notice 'row is not consistent because of location';
+            -- raise notice 'row is not consistent because of location';
             return null;
         end if;
         
@@ -144,11 +154,58 @@ create or replace function insert_raw_data() returns trigger as $insert_raw_data
     end;
 $insert_raw_data$ language plpgsql;
 
+create or replace function log_insert_raw_data() returns trigger as $log_raw_data_insert$
+    begin
+        insert into logs (operation, created, username, tablename, description) values 
+            (lower(tg_op), now(), user, tg_relname, 'CSV data were inserted.');  
+        return null; 
+    end;
+$log_raw_data_insert$ language plpgsql;
+
+create or replace function log_remove_block() returns trigger as $log_remove_block$
+    declare
+        affected_rows integer;
+    begin
+        insert into logs (operation, created, username, tablename, description) values 
+            (lower(tg_op), now(), user, tg_relname, 'Block "' || old.description || '" was removed.');
+        
+        select count(*) into affected_rows from measurements where block_id = old.id;
+        insert into logs (operation, created, username, tablename, description) values 
+            (lower(tg_op), now(), user, 'measurements', affected_rows || ' measurement(s) were removed with block "' || old.description || '".');
+        return old;
+    end;
+$log_remove_block$ language plpgsql;
+
+create or replace function log_remove_device() returns trigger as $log_remove_device$
+    declare
+        affected_rows integer;
+    begin
+        insert into logs (operation, created, username, tablename, description) values 
+            (lower(tg_op), now(), user, tg_relname, 'Device "' || old.serial_number || '" was removed.');
+
+        select count(*) into affected_rows from measurements where device_sn = old.serial_number;
+        insert into logs (operation, created, username, tablename, description) values 
+            (lower(tg_op), now(), user, 'measurements', affected_rows || ' measurement(s) were removed with device ' || old.serial_number || '.');
+        return old; 
+    end;
+$log_remove_device$ language plpgsql;
+
 -- ## TRIGGERS ## --
 create trigger insert_raw_data
     instead of insert on raw_data_view
-    for each row
-    execute procedure insert_raw_data();
+    for each row execute procedure insert_raw_data();
+
+create trigger log_insert_raw_data
+    after insert on raw_data_view
+    for statement execute procedure log_insert_raw_data();
+
+create trigger log_remove_block
+    before delete on blocks
+    for each row execute procedure log_remove_block();
+
+create trigger log_remove_device
+    before delete on devices
+    for each row execute procedure log_remove_device();
 
 -- ## RULES ## --
 create or replace rule measurements_on_duplicate_ignore as on insert to measurements
