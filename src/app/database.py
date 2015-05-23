@@ -88,10 +88,12 @@ def import_data(data):
         cur.execute(sql + args_str)
     conn.commit()
 
+
 def _get_import_values_string(cur, row):
     row[0] = datetime.utcfromtimestamp(int(row[0]))
     return cur.mogrify("(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         row).decode('utf-8')
+
 
 def export_data(filename):
     """Exports all raw_data."""
