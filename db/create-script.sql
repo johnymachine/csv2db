@@ -95,11 +95,38 @@ create or replace view raw_data_view as
 
 -- ## FUNCTIONS ## --
 create or replace function insert_raw_data() returns trigger as $insert_raw_data$
+    declare 
+        u units%ROWTYPE;
+        d devices%ROWTYPE;
+        b blocks%ROWTYPE;
+        l locations%ROWTYPE;
     begin
-        insert into units (unit, deviation) values (new.unit, new.unit_deviation);
-        insert into devices (serial_number, description) values (new.serial_number, new.device_description);
-        insert into blocks (id, description) values (new.block_id, new.block_description);
-        insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
+        select * into u from units where units.unit = new.unit;
+        select * into d from devices where devices.serial_number = new.serial_number;
+        select * into b from blocks where blocks.id = new.block_id;
+        select * into l from locations where locations.id = new.location_id;
+
+        if  (u is not null and u.deviation != new.unit_deviation) or
+            (d is not null and d.description != new.device_description) or
+            (b is not null and b.description != new.block_description) or
+            (l is not null and l.description != new.location_description)
+        then
+            -- raise notice 'row is not valid';
+            return null;            
+        end if;        
+        
+        if u is null then
+            insert into units (unit, deviation) values (new.unit, new.unit_deviation);
+        end if;
+        if d is null then 
+            insert into devices (serial_number, description) values (new.serial_number, new.device_description);
+        end if;
+        if b is null then
+            insert into blocks (id, description) values (new.block_id, new.block_description);
+        end if;
+        if l is null then
+            insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
+        end if;
         insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);        
         return null;
     end;
@@ -112,26 +139,6 @@ create trigger insert_raw_data
     execute procedure insert_raw_data();
 
 -- ## RULES ## --
-create or replace rule units_on_duplicate_ignore as on insert to units
-    where exists (
-        select 1 from units where unit = new.unit
-    ) do instead nothing;
-
-create or replace rule devices_on_duplicate_ignore as on insert to devices
-    where exists (
-        select 1 from devices where serial_number = new.serial_number
-    ) do instead nothing;
-
-create or replace rule blocks_on_duplicate_ignore as on insert to blocks
-    where exists (
-        select 1 from blocks where id = new.id
-    ) do instead nothing;
-
-create or replace rule locations_on_duplicate_ignore as on insert to locations
-    where exists (
-        select 1 from locations where id = new.id
-    ) do instead nothing;
-
 create or replace rule measurements_on_duplicate_ignore as on insert to measurements
     where exists (
         select 1 from measurements where 
