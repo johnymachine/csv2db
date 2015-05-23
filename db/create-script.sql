@@ -96,32 +96,33 @@ create or replace view raw_data_view as
 -- ## FUNCTIONS ## --
 create or replace function insert_raw_data() returns trigger as $insert_raw_data$
     declare 
-        u units%ROWTYPE;
-        d devices%ROWTYPE;
-        b blocks%ROWTYPE;
-        l locations%ROWTYPE;
+        u rdb.units%ROWTYPE;
+        d rdb.devices%ROWTYPE;
+        b rdb.blocks%ROWTYPE;
+        l rdb.locations%ROWTYPE;
     begin
+        set schema 'rdb';
         select * into u from units where units.unit = new.unit;
         select * into d from devices where devices.serial_number = new.serial_number;
         select * into b from blocks where blocks.id = new.block_id;
         select * into l from locations where locations.id = new.location_id;
 
-        if  (u is not null and u.deviation != new.unit_deviation) then
+        if u is not null and u.deviation != new.unit_deviation then
             raise notice 'row is not consistent because of unit';
             return null;
         end if;        
 
-        if (d is not null and d.description != new.device_description) then
+        if d is not null and d.description != new.device_description then
             raise notice 'row is not consistent because of device';
             return null;
         end if;
 
-        if (b is not null and b.description != new.block_description) then
+        if b is not null and b.description != new.block_description then
             raise notice 'row is not consistent because of block';
             return null;
         end if;
 
-        if (l is not null and l.description != new.location_description) then
+        if l is not null and (l.longitude != new.longitude or l.latitude != new.latitude or l.description != new.location_description) then
             raise notice 'row is not consistent because of location';
             return null;
         end if;
