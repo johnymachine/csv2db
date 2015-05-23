@@ -11,6 +11,7 @@ Author: Tomas Krizek
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread, QMutex, QMutexLocker
 import psycopg2
 from datetime import datetime
+import atexit
 
 
 REMOTE = {
@@ -175,6 +176,15 @@ class FunctionThread(QThread):
     def run(self):
         returnValue = self.function(*self.args, **self.kwargs)
         self.executed.emit({'returnValue': returnValue})
+
+
+
+@atexit.register
+def unload_module():
+    """Close db connection when module is unloaded."""
+    conMutex.lock()
+    conn.close()
+    conMutex.unlock()
 
 
 thread = FunctionThread()
