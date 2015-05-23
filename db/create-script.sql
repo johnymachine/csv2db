@@ -77,10 +77,16 @@ create or replace view measurements_view as
         m.value2 as value2, 
         abs(m.value1 - m.value2) as difference,
         d.description as device_description,
-        u.deviation as unit_deviation
+        u.deviation as unit_deviation,
+        m.block_id as block_id,
+        m.device_sn as serial_number,
+        m.unit as unit,
+        l.longitude as loc_x,
+        l.latitude as loc_y
     from measurements as m
     join units as u on u.unit = m.unit
-    join devices as d on d.serial_number = m.device_sn;
+    join devices as d on d.serial_number = m.device_sn
+    join locations as l on l.id = m.location_id;
 
 create or replace view raw_data_view as
     select 
