@@ -22,7 +22,6 @@ class DevicesWidget(QWidget):
     def __init__(self, parent=None):
         super(DevicesWidget, self).__init__(parent)
 
-        self.label = QLabel(self)
         self.table = CustomTableWidget(self)
         self.button = QPushButton(self)
         self.button.clicked.connect(self.on_button_clicked)
@@ -36,7 +35,6 @@ class DevicesWidget(QWidget):
         self.button.setText("Odstranit přístroj")
 
         layout = QVBoxLayout()
-        layout.addWidget(self.label)
         layout.addWidget(self.table)
         layout.addWidget(self.button)
         self.setLayout(layout)
