@@ -22,9 +22,6 @@ class CsvReader(object):
         self.file = open(filename, "r")
         self.reader = csv.reader(self.file, dialect=dialect, **kwds)
 
-    def __enter__(self):
-        return self
-
     def __iter__(self):
         return self
 
@@ -47,36 +44,22 @@ class CsvReader(object):
             if not rows:  # don't yield an empty list at the end of file
                 return
             yield rows
+
+    def readrows(self, rows_chunk=ROWS_CHUNK):
+        rows = []
+        for i in range(rows_chunk):  # read a chunk of rows
+            try:
+                rows.append(self.readrow())
+            except StopIteration:  # end of file
+                break
+        return rows
             
-    def __exit__(self, *err):
-        self.file.close()
-
-
-class CsvWriter(object):
-    def __init__(self, filename, dialect, **kwds):
-        self.file = open(filename, "w")
-        self.writer = csv.writer(self.file, dialect=dialect, **kwds)
-
-    def __enter__(self):
-        return self
-
-    def writerow(self, row):
-        self.writer.writerow(row)
-
-    def writerows(self, rows):
-        for row in rows:
-            self.writer.writerow(row)
-
-    def __exit__(self, *err):
+    def close(self):
         self.file.close()
 
 
 if __name__ == "__main__":
-    with CsvReader("in.csv", RdbCsvDialect) as csvreader:
-        for rows in csvreader.readall(998):
-            print(len(rows))
-
-    with CsvWriter("out.csv", RdbCsvDialect) as csvwriter:
-        with RdbCsvReader("in.csv", RdbCsvDialect) as csvreader:
-            for rows in csvreader.readall(100):
-                csvwriter.writerows(rows)
+    csvreader = CsvReader("in.csv", RdbCsvDialect)
+    for rows in csvreader.readall(998):
+        print(len(rows))
+    csvreader.close()

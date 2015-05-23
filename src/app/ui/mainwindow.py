@@ -9,8 +9,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
 
 from .. import database as db
-from ..csv import CsvReader, CsvDialect
 from .viewremovetablewidget import ViewRemoveTableWidget
+from .importdialog import ImportDialog
 
 
 class MainWindow(QMainWindow):
@@ -18,7 +18,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.conn = db.connect(db.LOCAL)
         self.setupUi(self)
 
         self.populateDevices()
@@ -82,8 +81,8 @@ class MainWindow(QMainWindow):
         
         MainWindow.setMenuBar(menuBar)
 
-    def populateDevices(self):
-        self.devicesWidget.setData(db.get_devices(self.conn))
+    def populateDevices(self, *args):
+        db.execute(db.get_devices, self.devicesWidget.setData)
 
     @pyqtSlot(int)
     def on_devicesWidget_removeRow(self, iRow):
@@ -98,11 +97,10 @@ class MainWindow(QMainWindow):
         msgBox = QMessageBox(QMessageBox.Question, title, text, buttons)
         
         if msgBox.exec_() == QMessageBox.Yes:
-            db.remove_device(self.conn, serial_number)
-            self.populateDevices()
+            db.execute(db.remove_device, self.populateDevices, serial_number)
   
-    def populateBlocks(self):
-        self.blocksWidget.setData(db.get_blocks(self.conn))
+    def populateBlocks(self, *args):
+        db.execute(db.get_blocks, self.blocksWidget.setData)
 
     @pyqtSlot(int)
     def on_blocksWidget_removeRow(self, iRow):
@@ -117,8 +115,7 @@ class MainWindow(QMainWindow):
         msgBox = QMessageBox(QMessageBox.Question, title, text, buttons)
         
         if msgBox.exec_() == QMessageBox.Yes:
-            db.remove_block(self.conn, id_)
-            self.populateBlocks()
+            db.execute(db.remove_block, self.populateBlocks, id_)
 
     def on_action_Import_triggered(self):
         caption = 'Import csv dat'
@@ -126,11 +123,9 @@ class MainWindow(QMainWindow):
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters(['CSV soubory (*.csv)', 'Všechny soubory (*)'])
         if dialog.exec_():
-            filename = dialog.selectedFiles()[0]
-            # TODO progress bar, exception handling
-            with CsvReader(filename, CsvDialect) as csvreader:
-                for rows in csvreader.readall():
-                    db.import_data(self.conn, rows)
+            importDialog = ImportDialog()
+            importDialog.setFilename(dialog.selectedFiles()[0])
+            importDialog.exec_()
 
     def on_action_Export_triggered(self):
         caption = 'Export dat do csv'
@@ -141,10 +136,8 @@ class MainWindow(QMainWindow):
         dialog.setDefaultSuffix('csv')
         if dialog.exec_():
             filename = dialog.selectedFiles()[0]
-            db.export_data(self.conn, filename)
-
-    def __del__(self):
-        del self.conn
+            # TODO
+            # db.export_data(self.conn, filename)
 
     def _uconvert(self, text):
         """Converts QString encoding to Python unicode string."""
