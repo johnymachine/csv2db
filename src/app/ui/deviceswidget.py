@@ -37,9 +37,6 @@ class DevicesWidget(QWidget):
     def setData(self, tableData):
         self.table.setData(tableData)
 
-    def getRowData(self, iRow):
-        self.table.getRowData(iRow)
-
     @pyqtSlot()
     def on_button_clicked(self):
         selected = self.table.selectionModel().selectedRows()
