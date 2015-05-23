@@ -128,7 +128,7 @@ def execute(function, callback=None, *args, **kwargs):
 
 
 def _startExecution():
-    if not thread.isRunning() and queue:
+    if thread.done and queue:
         function = queue[0]['function']
         args = queue[0]['args']
         kwargs = queue[0]['kwargs']
@@ -139,13 +139,12 @@ def _startExecution():
 @pyqtSlot(dict)
 def _on_thread_executed(dict_):
     callback = queue[0]['callback']
+    del queue[0]
+    
+    _startExecution()
+
     if callable(callback):
         callback(dict_['returnValue'])
-    
-    del queue[0]
-
-    thread.wait()
-    _startExecution()
 
 
 class FunctionThread(QThread):
@@ -159,6 +158,11 @@ class FunctionThread(QThread):
         self.function = None
         self.args = None
         self.kwargs = None
+        self.returnValue = None
+
+        self.finished.connect(self.on_thread_finished)
+
+        self.done = True
 
     def __del__(self):
         self.wait()
@@ -169,13 +173,20 @@ class FunctionThread(QThread):
         self.function = function
         self.args = args
         self.kwargs = kwargs
+        self.done = False
 
-        self.wait()
         self.start()
 
     def run(self):
         returnValue = self.function(*self.args, **self.kwargs)
-        self.executed.emit({'returnValue': returnValue})
+        self.mutex.lock()
+        self.returnValue = returnValue
+        self.mutex.unlock()
+
+    def on_thread_finished(self):
+        result = {'returnValue': self.returnValue}
+        self.done = True
+        self.executed.emit(result)
 
 
 
