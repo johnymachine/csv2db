@@ -3,7 +3,7 @@ RDB 2015
 
 User Interface
 
-View Remove Table Widget for devices, blocks of measurements
+Devices Widget
 
 Author: Tomas Krizek
 """
@@ -17,7 +17,7 @@ from customtablewidget import CustomTableWidget
 
 class DevicesWidget(QWidget):
 
-    removeRow = pyqtSignal(int)
+    removeDevice = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super(DevicesWidget, self).__init__(parent)
@@ -31,6 +31,7 @@ class DevicesWidget(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
+        self.table.setColumnHeaders(['Sériové číslo', 'Popis'])
 
         self.button.setText("Odstranit přístroj")
 
@@ -43,9 +44,6 @@ class DevicesWidget(QWidget):
     def setData(self, tableData):
         self.table.setData(tableData)
 
-    def setColumnHeaders(self, columnHeaders):
-        self.table.setColumnHeaders(columnHeaders)
-
     def getRowData(self, iRow):
         self.table.getRowData(iRow)
 
@@ -53,7 +51,7 @@ class DevicesWidget(QWidget):
     def on_button_clicked(self):
         selected = self.table.selectionModel().selectedRows()
         if selected:
-            self.removeRow.emit(selected[0].row())
+            self.removeDevice.emit(selected[0].data())
 
 
 if __name__ == '__main__':
@@ -64,22 +62,21 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     widget = DevicesWidget()
-    widget.setColumnHeaders(["Name", "Hair Color"])
     widget.show()
 
     tableData = [
-        ("Alice", 'aliceblue'),
-        ("Neptun", 'aquamarine'),
-        ("Ferdinand", 'springgreen')
+        ("qap-3", 'aliceblue'),
+        ("bfg-1", 'aquamarine'),
+        ("topkek9", 'springgreen')
     ]
     widget.setData(tableData)
 
     @pyqtSlot(int)
-    def on_widget_removeRow(index):
+    def on_widget_removeRow(serial):
         msgBox = QMessageBox()
-        msgBox.setText(str(index))
+        msgBox.setText(serial)
         msgBox.exec_()
 
-    widget.removeRow.connect(on_widget_removeRow)
+    widget.removeDevice.connect(on_widget_removeRow)
 
     sys.exit(app.exec_())
