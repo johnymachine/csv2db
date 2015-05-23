@@ -19,10 +19,10 @@ class ImportDialog(QDialog):
     def __init__(self, parent=None):
         super(ImportDialog, self).__init__(parent)
 
-        self.cancelled = False
+        self.done = False
         self.requestCancel = False
 
-        self.rowsChunk = 20000 #CsvReader.ROWS_CHUNK
+        self.rowsChunk = CsvReader.ROWS_CHUNK
 
         self.rowCount = 0
         self.timeStart = time.time()
@@ -65,11 +65,12 @@ class ImportDialog(QDialog):
         def afterInsert(*args):
             self.rowCount = self.rowCount + self.rowsChunk
             if self.requestCancel:
-                self.cancelled = True
+                self.done = True
                 self.reject()
             else:
                 data = self.csvReader.readrows(self.rowsChunk)
                 if not data:
+                    self.done = True
                     self.accept()
                 else:
                     db.execute(db.import_data, afterInsert, data)
@@ -79,7 +80,7 @@ class ImportDialog(QDialog):
 
     def closeEvent(self, event):
         self.requestCancel = True
-        if not self.cancelled:
+        if not self.done:
             event.ignore()
         else:
             event.accept()
