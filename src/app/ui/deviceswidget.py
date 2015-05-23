@@ -23,15 +23,10 @@ class DevicesWidget(QWidget):
         super(DevicesWidget, self).__init__(parent)
 
         self.table = CustomTableWidget(self)
-        self.button = QPushButton(self)
-        self.button.clicked.connect(self.on_button_clicked)
-
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.table.horizontalHeader().setStretchLastSection(True)
-        self.table.verticalHeader().setVisible(False)
         self.table.setColumnHeaders(['Sériové číslo', 'Popis'])
 
+        self.button = QPushButton(self)
+        self.button.clicked.connect(self.on_button_clicked)
         self.button.setText("Odstranit přístroj")
 
         layout = QVBoxLayout()
