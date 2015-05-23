@@ -63,8 +63,9 @@ class BasicFilterPage(QWidget):
         options.insert(0, '')
         options = [str(option) for option in options]
 
-        index = options.index(str(selected))
-        if index == -1:
+        try:
+            index = options.index(str(selected))
+        except ValueError:
             index = 0
 
         combo.clear()
@@ -161,7 +162,7 @@ class LocationFilterPage(QWidget):
         self.ySpinBox.setDecimals(6)
 
         self.tolSpinBox = QDoubleSpinBox()
-        self.tolSpinBox.setMinimum(float('-inf'))
+        self.tolSpinBox.setMinimum(0)
         self.tolSpinBox.setMaximum(float('inf'))
         self.tolSpinBox.setDecimals(6)
 
@@ -204,10 +205,10 @@ class LocationFilterPage(QWidget):
         return filter_
 
 
-class ConfigDialog(QDialog):
+class FilterDialog(QDialog):
 
     def __init__(self, parent=None):
-        super(ConfigDialog, self).__init__(parent)
+        super(FilterDialog, self).__init__(parent)
 
         self.accepted.connect(self.createFilter)
 
@@ -289,9 +290,12 @@ class ConfigDialog(QDialog):
 
     @pyqtSlot()
     def createFilter(self):
-        self.filter = self.basicFilterPage.getFilter()
-        self.filter.update(self.timeFilterPage.getFilter())
-        self.filter.update(self.locationFilterPage.getFilter())
+        self._filter = self.basicFilterPage.getFilter()
+        self._filter.update(self.timeFilterPage.getFilter())
+        self._filter.update(self.locationFilterPage.getFilter())
+
+    def filter(self):
+        return self._filter
 
 
 if __name__ == '__main__':
@@ -299,7 +303,7 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)
-    dialog = ConfigDialog()
+    dialog = FilterDialog()
     
     options = {'block': [1, 2, 3, 4, 5], \
                'device': ['rm2-x', 'zc-3d', 'qap'], \

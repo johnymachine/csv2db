@@ -20,8 +20,7 @@ class MainWindow(QMainWindow):
 
         self.setupUi(self)
 
-        self.populateDevices()
-        self.populateBlocks()
+        self.updateData()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -126,6 +125,8 @@ class MainWindow(QMainWindow):
             importDialog = ImportDialog()
             importDialog.setFilename(dialog.selectedFiles()[0])
             importDialog.exec_()
+            self.updateData()
+
 
     def on_action_Export_triggered(self):
         caption = 'Export dat do csv'
@@ -138,6 +139,10 @@ class MainWindow(QMainWindow):
             filename = dialog.selectedFiles()[0]
             # TODO
             # db.export_data(self.conn, filename)
+
+    def updateData(self):
+        self.populateBlocks()
+        self.populateDevices()
 
     def _uconvert(self, text):
         """Converts QString encoding to Python unicode string."""
