@@ -111,7 +111,7 @@ create or replace function insert_raw_data() returns trigger as $insert_raw_data
             (b is not null and b.description != new.block_description) or
             (l is not null and l.description != new.location_description)
         then
-            -- raise notice 'row is not valid';
+            -- raise notice 'row is not consistent';
             return null;            
         end if;        
         
