@@ -92,7 +92,7 @@ insert into raw_data_view (
         created, unit, location_id, longitude, latitude, location_description, value1, value2, 
         unit_deviation, serial_number, device_description, block_id, block_description
     ) values (
-        '2015-01-01 00:00:00', 'Hz', 1, 1.0, 1.0, 'loc_description', 0, 1, 0.01, -- inconsistent device
+        '2015-01-01 00:00:00', 'Hz', 1, 1.0, 1.0, 'loc_description', 0, 1, 0.1, -- inconsistent device
         'sn_A', 'device_description1', 1, 'block_description'
     );
 

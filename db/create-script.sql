@@ -106,14 +106,25 @@ create or replace function insert_raw_data() returns trigger as $insert_raw_data
         select * into b from blocks where blocks.id = new.block_id;
         select * into l from locations where locations.id = new.location_id;
 
-        if  (u is not null and u.deviation != new.unit_deviation) or
-            (d is not null and d.description != new.device_description) or
-            (b is not null and b.description != new.block_description) or
-            (l is not null and l.description != new.location_description)
-        then
-            -- raise notice 'row is not consistent';
-            return null;            
+        if  (u is not null and u.deviation != new.unit_deviation) then
+            raise notice 'row is not consistent because of unit';
+            return null;
         end if;        
+
+        if (d is not null and d.description != new.device_description) then
+            raise notice 'row is not consistent because of device';
+            return null;
+        end if;
+
+        if (b is not null and b.description != new.block_description) then
+            raise notice 'row is not consistent because of block';
+            return null;
+        end if;
+
+        if (l is not null and l.description != new.location_description) then
+            raise notice 'row is not consistent because of location';
+            return null;
+        end if;
         
         if u is null then
             insert into units (unit, deviation) values (new.unit, new.unit_deviation);
