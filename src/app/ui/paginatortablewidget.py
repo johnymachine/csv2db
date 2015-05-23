@@ -78,6 +78,12 @@ class PaginatorTableWidget(QWidget):
     def setColumnHeaders(self, columnHeaders):
         self.table.setColumnHeaders(columnHeaders)
 
+    def resizeEvent(self, event):
+        rowHeight = self.table.visualItemRect(self.table.item(0, 0)).height() + 2
+        rowViewPortHeight = self.table.height()
+        self.setPageRowCount(int(rowViewPortHeight / rowHeight))
+        self.on_controls_valueChanged(self.controls.counter.value())
+
 
 if __name__ == '__main__':
 

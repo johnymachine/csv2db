@@ -60,11 +60,12 @@ def remove_device(serial_number):
     conn.commit()
 
 
-def get_blocks():
+def get_blocks(filter_=None):
     QMutexLocker(conMutex)
-    sql = 'select "id", "description" from "blocks"'
+    sql = 'select "id", "description" from "blocks" where "id" in ({0})'
+    subquery = 'select distinct "block_id" from "measurements_view"'
     with conn.cursor() as cur:
-        cur.execute(sql)
+        cur.execute(sql.format(subquery + filter_to_sql(cur, filter_)))
         return cur.fetchall()
 
 
@@ -82,6 +83,69 @@ def get_units():
     with conn.cursor() as cur:
         cur.execute(sql)
         return cur.fetchall()
+
+
+def get_measurements(filter_=None, offset=0, limit=20):
+    QMutexLocker(conMutex)
+    sql_begin = 'select "created", "value1", "value2", "difference", \
+            "device_description", "unit_deviation" from \
+            "measurements_view"'
+    with conn.cursor() as cur:
+        sql = sql_begin + filter_to_sql(cur, filter_)
+        sql = sql + cur.mogrify("offset %s limit %s", (offset, limit)).decode('utf-8')
+        cur.execute(sql)
+        return cur.fetchall()
+
+
+def get_measurements_count(filter_=None, *args):
+    QMutexLocker(conMutex)
+    sql = 'select count(1) from "measurements_view"'
+    with conn.cursor() as cur:
+        cur.execute(sql + filter_to_sql(cur, filter_))
+        return cur.fetchone()[0]
+
+
+def filter_to_sql(cur, filter_):
+    def join_conditions(original, additional, operator='and'):
+        additional = ' ' + additional + ' '
+        if not original:
+            return additional
+        return original + ' ' + operator + ' ' + additional
+
+    if not filter_:
+        return ''
+
+    conditions = ''
+
+    if 'block' in filter_:
+        additional = cur.mogrify('block_id = %s', (filter_['block'],)).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'device' in filter_:
+        additional = cur.mogrify('serial_number = %s', (filter_['device'],)).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'unit' in filter_:
+        additional = cur.mogrify('unit = %s', (filter_['unit'],)).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'start_datetime' in filter_ and 'end_datetime' in filter_:
+        additional = cur.mogrify('created between %s and %s',
+            (filter_['start_datetime'], filter_['end_datetime'],)).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'loc_x' in filter_ and 'loc_tol' in filter_:
+        additional = cur.mogrify('loc_x between %s and %s',
+            (float(filter_['loc_x']) - float(filter_['loc_tol']),
+            float(filter_['loc_x']) + float(filter_['loc_tol']))).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'loc_y' in filter_ and 'loc_tol' in filter_:
+        additional = cur.mogrify('loc_y between %s and %s',
+            (float(filter_['loc_y']) - float(filter_['loc_tol']),
+            float(filter_['loc_y']) + float(filter_['loc_tol']))).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'deviated_values' in filter_ and \
+        filter_['deviated_values'] == True:
+        additonal = 'difference > unit_deviation'
+        conditions = join_conditions(conditions, additional)
+
+    return ' where ' + conditions
 
 
 def import_data(data):

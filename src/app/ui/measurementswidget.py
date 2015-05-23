@@ -24,7 +24,7 @@ class MeasurementsWidget(QWidget):
 
         self.offset = 0
         self.limit = 15
-        self.filter = {}
+        self._filter = {}
 
         self.filtering = FilteringWidget()
         self.filtering.filterChanged.connect(self.on_filterChanged)
@@ -41,18 +41,16 @@ class MeasurementsWidget(QWidget):
         layout.addWidget(self.table)
         self.setLayout(layout)
 
-        self.requestData.emit(self.filter, self.offset, self.limit)
-
     @pyqtSlot(int, int)
     def on_table_requestData(self, offset, limit):
         self.offset = offset
         self.limit = limit
-        self.requestData.emit(self.filter, self.offset, self.limit)
+        self.requestData.emit(self._filter, self.offset, self.limit)
 
     @pyqtSlot(dict)
     def on_filterChanged(self, filter_):
-        self.filter = filter_
-        self.requestData.emit(self.filter, self.offset, self.limit)
+        self._filter = filter_
+        self.requestData.emit(self._filter, self.offset, self.limit)
 
     def setData(self, data):
         self.table.setData(data)
@@ -65,6 +63,9 @@ class MeasurementsWidget(QWidget):
 
     def setFilter(self, filter_):
         self.filtering.setFilter(filter_)
+
+    def filter(self):
+        return self._filter
 
 
 if __name__ == '__main__':

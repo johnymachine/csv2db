@@ -25,6 +25,10 @@ class MainWindow(QMainWindow):
         self.setupUi(self)
         self.updateData()
 
+        self.on_requestBlockData(self.blocksWidget.filter())
+        self.on_requestMeasurementData(self.measurementsWidget.filter(), 
+            self.measurementsWidget.offset, self.measurementsWidget.limit)
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
@@ -80,9 +84,10 @@ class MainWindow(QMainWindow):
         MainWindow.setMenuBar(menuBar)
 
     def setDevices(self, devices):
-        self.devicesWidget.setData(devices)
-        self.options['device'] = [device[0] for device in devices]
-        self.on_options_updated()
+        if devices:
+            self.devicesWidget.setData(devices)
+            self.options['device'] = [device[0] for device in devices]
+            self.on_options_updated()
 
     @pyqtSlot(str)
     def on_removeDevice(self, serial_number):
@@ -97,8 +102,9 @@ class MainWindow(QMainWindow):
             db.execute(db.remove_device, self.updateData, serial_number)
 
     def setBlocks(self, blocks):
-        self.options['block'] = [block[0] for block in blocks]
-        self.on_options_updated()
+        if blocks:
+            self.options['block'] = [block[0] for block in blocks]
+            self.on_options_updated()
 
     @pyqtSlot(int)
     def on_removeBlock(self, block_id):
@@ -110,7 +116,7 @@ class MainWindow(QMainWindow):
         msgBox = QMessageBox(QMessageBox.Question, title, text, buttons)
         
         if msgBox.exec_() == QMessageBox.Yes:
-            db.execute(db.remove_block, self.on_blockRemoved, id_)
+            db.execute(db.remove_block, self.on_blockRemoved, block_id)
 
     def on_blockRemoved(self, *args):
         db.execute(db.get_blocks, self.setBlocks)
@@ -157,8 +163,9 @@ class MainWindow(QMainWindow):
         db.execute(db.get_units, self.setUnits)
 
     def setUnits(self, units):
-        self.options['unit'] = [unit[0] for unit in units]
-        self.on_options_updated()
+        if units:
+            self.options['unit'] = [unit[0] for unit in units]
+            self.on_options_updated()
 
     def on_options_updated(self):
         self.blocksWidget.setFilterOptions(self.options)

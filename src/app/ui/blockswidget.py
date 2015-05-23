@@ -44,8 +44,6 @@ class BlocksWidget(QWidget):
         layout.addWidget(self.button)
         self.setLayout(layout)
 
-        self.requestData.emit(self._filter)
-
     def setData(self, tableData):
         self.table.setData(tableData)
 
