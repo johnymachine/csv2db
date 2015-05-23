@@ -292,7 +292,6 @@ class ConfigDialog(QDialog):
         self.filter = self.basicFilterPage.getFilter()
         self.filter.update(self.timeFilterPage.getFilter())
         self.filter.update(self.locationFilterPage.getFilter())
-        print(self.filter)        
 
 
 if __name__ == '__main__':
