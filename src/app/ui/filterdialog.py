@@ -60,16 +60,17 @@ class BasicFilterPage(QWidget):
         self.setLayout(layout)
 
     def setComboOptions(self, combo, options, selected=''):
-        options.insert(0, '')
-        options = [str(option) for option in options]
+        items = ['']
+        for option in options:
+            items.append(str(option))
 
         try:
-            index = options.index(str(selected))
+            index = items.index(str(selected))
         except ValueError:
             index = 0
 
         combo.clear()
-        combo.addItems(options)
+        combo.addItems(items)
         combo.setCurrentIndex(index)
 
     def getFilter(self):
