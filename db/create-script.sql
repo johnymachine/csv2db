@@ -44,7 +44,7 @@ create table locations (
 
 create table logs (
     id serial,
-    created timestamp not null default now(),
+    created timestamp not null default (now() at time zone 'utc'),
     operation character (6) not null,
     username varchar(30) not null,
     tablename varchar(30) not null,
@@ -166,7 +166,7 @@ $insert_raw_data$ language plpgsql;
 create or replace function log_insert_raw_data() returns trigger as $log_raw_data_insert$
     begin
         insert into logs (operation, created, username, tablename, description) values 
-            (lower(tg_op), now(), user, tg_relname, 'CSV data were inserted.');  
+            (lower(tg_op), (now() at time zone 'utc'), user, tg_relname, 'CSV data were inserted.');  
         return null; 
     end;
 $log_raw_data_insert$ language plpgsql;
@@ -176,11 +176,11 @@ create or replace function log_remove_block() returns trigger as $log_remove_blo
         affected_rows integer;
     begin
         insert into logs (operation, created, username, tablename, description) values 
-            (lower(tg_op), now(), user, tg_relname, 'Block "' || old.description || '" was removed.');
+            (lower(tg_op), (now() at time zone 'utc'), user, tg_relname, 'Block "' || old.description || '" was removed.');
         
         select count(*) into affected_rows from measurements where block_id = old.id;
         insert into logs (operation, created, username, tablename, description) values 
-            (lower(tg_op), now(), user, 'measurements', affected_rows || ' measurement(s) were removed with block "' || old.description || '".');
+            (lower(tg_op), (now() at time zone 'utc'), user, 'measurements', affected_rows || ' measurement(s) were removed with block "' || old.description || '".');
         return old;
     end;
 $log_remove_block$ language plpgsql;
@@ -190,11 +190,11 @@ create or replace function log_remove_device() returns trigger as $log_remove_de
         affected_rows integer;
     begin
         insert into logs (operation, created, username, tablename, description) values 
-            (lower(tg_op), now(), user, tg_relname, 'Device "' || old.serial_number || '" was removed.');
+            (lower(tg_op), (now() at time zone 'utc'), user, tg_relname, 'Device "' || old.serial_number || '" was removed.');
 
         select count(*) into affected_rows from measurements where device_sn = old.serial_number;
         insert into logs (operation, created, username, tablename, description) values 
-            (lower(tg_op), now(), user, 'measurements', affected_rows || ' measurement(s) were removed with device ' || old.serial_number || '.');
+            (lower(tg_op), (now() at time zone 'utc'), user, 'measurements', affected_rows || ' measurement(s) were removed with device ' || old.serial_number || '.');
         return old; 
     end;
 $log_remove_device$ language plpgsql;
