@@ -33,18 +33,15 @@ def connect(location=LOCAL):
     """Opens and returns a database connection."""
     conn = psycopg2.connect(**location)
     with conn.cursor() as cur:
-        cur.execute("set schema 'rdb'")
+        cur.execute("set search_path to 'rdb'")
     conn.commit()
     return conn
 
 
-conMutex = QMutex()
 conn = connect(LOCAL)
-conMutex.unlock()
 
 
 def get_devices():
-    QMutexLocker(conMutex)
     """Retrieves all devices from database."""
     sql = 'select "serial_number", "description" from "devices"'
     with conn.cursor() as cur:
@@ -53,7 +50,6 @@ def get_devices():
 
 
 def remove_device(serial_number):
-    QMutexLocker(conMutex)
     sql = 'delete from "devices" where "serial_number" = (%s)'
     with conn.cursor() as cur:
         cur.execute(sql, (serial_number,))
@@ -61,7 +57,6 @@ def remove_device(serial_number):
 
 
 def get_blocks(filter_=None):
-    QMutexLocker(conMutex)
     sql = 'select "id", "description" from "blocks" where "id" in ({0})'
     subquery = 'select distinct "block_id" from "measurements_view"'
     with conn.cursor() as cur:
@@ -70,7 +65,6 @@ def get_blocks(filter_=None):
 
 
 def remove_block(id_):
-    QMutexLocker(conMutex)
     sql = 'delete from "blocks" where "id" = (%s)'
     with conn.cursor() as cur:
         cur.execute(sql, (id_,))
@@ -78,7 +72,6 @@ def remove_block(id_):
 
 
 def get_units():
-    QMutexLocker(conMutex)
     sql = 'select "unit" from "units"'
     with conn.cursor() as cur:
         cur.execute(sql)
@@ -86,19 +79,17 @@ def get_units():
 
 
 def get_measurements(filter_=None, offset=0, limit=20):
-    QMutexLocker(conMutex)
     sql_begin = 'select "created", "value1", "value2", "difference", \
             "device_description", "unit_deviation" from \
             "measurements_view"'
     with conn.cursor() as cur:
         sql = sql_begin + filter_to_sql(cur, filter_)
-        sql = sql + cur.mogrify("offset %s limit %s", (offset, limit)).decode('utf-8')
+        sql = sql + cur.mogrify(" offset %s limit %s", (offset, limit)).decode('utf-8')
         cur.execute(sql)
         return cur.fetchall()
 
 
 def get_measurements_count(filter_=None, *args):
-    QMutexLocker(conMutex)
     sql = 'select count(1) from "measurements_view"'
     with conn.cursor() as cur:
         cur.execute(sql + filter_to_sql(cur, filter_))
@@ -150,7 +141,6 @@ def filter_to_sql(cur, filter_):
 
 def import_data(data):
     """Performs multiple insert of data."""
-    QMutexLocker(conMutex)
     sql = 'insert into rdb."raw_data_view"("created", "unit", "location_id", \
             "longitude", "latitude", "location_description", "value1", \
             "value2", "unit_deviation", "serial_number", "device_description", \
@@ -170,7 +160,6 @@ def _get_import_values_string(cur, row):
 
 def export_data(filename):
     """Exports all raw_data."""
-    QMutexLocker(conMutex)
     query = """
     select (select round(extract(epoch from "created" at time zone 'utc'))),\
             "unit", "location_id", \
@@ -198,7 +187,6 @@ def execute(function, callback=None, *args, **kwargs):
              'kwargs': kwargs})
         _startExecution()
 
-
 def _startExecution():
     if thread.done and queue:
         function = queue[0]['function']
@@ -212,7 +200,6 @@ def _startExecution():
 def _on_thread_executed(dict_):
     callback = queue[0]['callback']
     del queue[0]
-    
     _startExecution()
 
     if callable(callback):
@@ -265,9 +252,7 @@ class FunctionThread(QThread):
 @atexit.register
 def unload_module():
     """Close db connection when module is unloaded."""
-    conMutex.lock()
     conn.close()
-    conMutex.unlock()
 
 
 thread = FunctionThread()

@@ -23,7 +23,7 @@ class MeasurementsWidget(QWidget):
         super(MeasurementsWidget, self).__init__(parent)
 
         self.offset = 0
-        self.limit = 15
+        self.limit = PaginatorTableWidget.PAGE_ROW_COUNT
         self._filter = {}
 
         self.filtering = FilteringWidget()

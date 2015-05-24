@@ -173,9 +173,9 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(dict, int, int)
     def on_requestMeasurementData(self, filter_, offset, limit):
-        db.execute(db.get_measurements_count,
-            self.measurementsWidget.setMaxRowCount,
-            filter_)
+        # db.execute(db.get_measurements_count,
+        #     self.measurementsWidget.setMaxRowCount,
+        #     filter_)
         db.execute(db.get_measurements,
             self.measurementsWidget.setData,
             filter_, offset, limit)
