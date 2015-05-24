@@ -16,6 +16,7 @@ from .deviceswidget import DevicesWidget
 from .blockswidget import BlocksWidget
 from .measurementswidget import MeasurementsWidget
 from .exportdialog import ExportDialog
+from .logswidget import LogsWidget
 
 
 class MainWindow(QMainWindow):
@@ -30,6 +31,8 @@ class MainWindow(QMainWindow):
         self.on_requestBlockData(self.blocksWidget.filter())
         self.on_requestMeasurementData(self.measurementsWidget.filter(), 
             self.measurementsWidget.offset, self.measurementsWidget.limit)
+        self.on_requestLogData(self.logsWidget.filter(),
+            self.logsWidget.offset, self.logsWidget.limit)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -44,6 +47,7 @@ class MainWindow(QMainWindow):
         sizePolicy.setHeightForWidth(self.tabsWidget.sizePolicy().
             hasHeightForWidth())
         self.tabsWidget.setSizePolicy(sizePolicy)
+        self.tabsWidget.currentChanged.connect(self.on_tabChanged)
 
         self.devicesWidget = DevicesWidget()
         self.devicesWidget.removeDevice.connect(self.on_removeDevice)
@@ -56,9 +60,13 @@ class MainWindow(QMainWindow):
         self.measurementsWidget = MeasurementsWidget()
         self.measurementsWidget.requestData.connect(self.on_requestMeasurementData)
 
+        self.logsWidget = LogsWidget()
+        self.logsWidget.requestData.connect(self.on_requestLogData)
+
         self.tabsWidget.addTab(self.blocksWidget, "Skupiny měření")
         self.tabsWidget.addTab(self.measurementsWidget, "Naměřené hodnoty")
         self.tabsWidget.addTab(self.devicesWidget, "Přístroje")
+        self.tabsWidget.addTab(self.logsWidget, "Log")
 
         self.setCentralWidget(self.tabsWidget)
 
@@ -179,4 +187,14 @@ class MainWindow(QMainWindow):
         db.execute(db.get_measurements,
             self.measurementsWidget.setData,
             filter_, offset, limit)
+
+    @pyqtSlot(dict, int, int)
+    def on_requestLogData(self, filter_, offset, limit):
+        db.execute(db.get_logs, self.logsWidget.setData,
+            filter_, offset, limit)
+
+    @pyqtSlot(int)
+    def on_tabChanged(self, index):
+        if index == 3:
+            self.logsWidget.updateData()
 

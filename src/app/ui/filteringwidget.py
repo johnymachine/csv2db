@@ -67,7 +67,7 @@ class FilteringWidget(QWidget):
 
         self.label = QLabel(self)
         self.label.setWordWrap(True)
-        self.label.setText(FilteringWidget.filterToText(self._filter))
+        self.label.setText(self.filterToText(self._filter))
 
         self.changeFilter = QPushButton(self)
         self.changeFilter.setText("Upravit filtr")
@@ -108,7 +108,7 @@ class FilteringWidget(QWidget):
         self.options = options
 
     def onFilterChange(self):
-        self.label.setText(FilteringWidget.filterToText(self._filter))
+        self.label.setText(self.filterToText(self._filter))
         self.filterChanged.emit(self._filter)
 
     def filter(self):

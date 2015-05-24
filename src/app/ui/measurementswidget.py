@@ -34,9 +34,9 @@ class MeasurementsWidget(QWidget):
         self.table.setPageRowCount(self.limit)
         self.table.requestData.connect(self.on_table_requestData)
         self.table.setColumnHeaders(['Datum a čas', 'Hodnota 1', 'Hodnota 2',
-            'Rozdíl hodnot', 'Přístroj', 'Odchylka přístroje'])
+            'Rozdíl hodnot', 'Přístroj', 'Odchylka'])
         header = self.table.table.horizontalHeader()
-        header.resizeSection(0, 160)
+        header.resizeSection(0, 190)
         header.resizeSection(1, 110)
         header.resizeSection(2, 110)
         header.resizeSection(3, 110)

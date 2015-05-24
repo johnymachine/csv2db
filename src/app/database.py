@@ -79,7 +79,7 @@ def get_units():
 
 
 def get_measurements(filter_=None, offset=0, limit=20):
-    sql_begin = 'select "created", "value1", "value2", "difference", \
+    sql_begin = 'select "created" at time zone \'utc\', "value1", "value2", "difference", \
             "device_description", "unit_deviation" from \
             "measurements_view"'
     with conn.cursor() as cur:
@@ -97,6 +97,17 @@ def get_measurements_count(filter_=None, *args):
         return cur.fetchone()[0]
 
 
+def get_logs(filter_=None, offset=0, limit=20):
+    sql_begin = 'select "created" at time zone \'utc\', "operation", "tablename", \
+            "description" from "logs"'
+    with conn.cursor() as cur:
+        sql = sql_begin + filter_to_sql(cur, filter_)
+        sql = sql + cur.mogrify('order by "created" desc offset %s limit %s', 
+            (offset, limit)).decode('utf-8')
+        cur.execute(sql)
+        return cur.fetchall()
+
+
 def filter_to_sql(cur, filter_):
     def join_conditions(original, additional, operator='and'):
         additional = ' ' + additional + ' '
@@ -109,6 +120,12 @@ def filter_to_sql(cur, filter_):
 
     conditions = ''
 
+    if 'operation' in filter_:
+        additional = cur.mogrify('"operation" = %s', (filter_['operation'],)).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
+    if 'tablename' in filter_:
+        additional = cur.mogrify('"tablename" = %s', (filter_['tablename'],)).decode('utf-8')
+        conditions = join_conditions(conditions, additional)
     if 'block' in filter_:
         additional = cur.mogrify('block_id = %s', (filter_['block'],)).decode('utf-8')
         conditions = join_conditions(conditions, additional)
