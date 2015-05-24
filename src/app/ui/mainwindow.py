@@ -86,12 +86,9 @@ class MainWindow(QMainWindow):
         menu_File.addAction(action_Import)
         menu_File.addAction(action_Export)
         menuBar.addAction(menu_File.menuAction())
-
-        menu_About = QtWidgets.QMenu(menuBar)
-        menu_About.setTitle('O &aplikaci')
-        menuBar.addAction(menu_About.menuAction())
         
         MainWindow.setMenuBar(menuBar)
+        self.setWindowTitle("RDB 2015 - Křízek, Maděra, Gabriel")
 
     def setDevices(self, devices):
         if devices:

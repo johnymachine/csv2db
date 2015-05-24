@@ -38,7 +38,7 @@ def connect(location=LOCAL):
     return conn
 
 
-conn = connect(LOCAL)
+conn = connect(REMOTE)
 
 
 def get_devices():
