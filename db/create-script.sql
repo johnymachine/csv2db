@@ -138,10 +138,13 @@ create or replace function insert_raw_data() returns trigger as $insert_raw_data
             return null;
         end if;
 
+        --TODO enable
+        /*
         if l is not null and (l.longitude != new.longitude or l.latitude != new.latitude or l.description != new.location_description) then
             -- raise notice 'row is not consistent because of location';
             return null;
         end if;
+        */
         
         if u is null then
             insert into units (unit, deviation) values (new.unit, new.unit_deviation);
@@ -213,7 +216,10 @@ create trigger log_remove_device
     before delete on devices
     for each row execute procedure log_remove_device();
 
+
+/*
 -- ## RULES ## --
+-- useless, slows down inserts to a crawl
 create or replace rule measurements_on_duplicate_ignore as on insert to measurements
     where exists (
         select 1 from measurements where 
@@ -222,3 +228,4 @@ create or replace rule measurements_on_duplicate_ignore as on insert to measurem
             block_id = new.block_id and device_sn = new.device_sn and
             location_id = new.location_id
     ) do instead nothing;
+*/
