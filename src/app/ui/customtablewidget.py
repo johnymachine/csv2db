@@ -10,7 +10,7 @@ Author: Tomas Krizek
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QTableWidget, QTableWidgetItem, QWidget,
-    QAbstractItemView)
+    QAbstractItemView, QHeaderView)
 
 
 class CustomTableWidget(QTableWidget):
@@ -20,6 +20,7 @@ class CustomTableWidget(QTableWidget):
 
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.horizontalHeader().setStretchLastSection(True)
         self.verticalHeader().setVisible(False)
 

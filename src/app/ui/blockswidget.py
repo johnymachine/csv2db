@@ -33,6 +33,7 @@ class BlocksWidget(QWidget):
         self.table = CustomTableWidget()
         self.table.setColumnHeaders(['Číslo skupiny', 'Popis'])
         self.table.cellDoubleClicked.connect(self.on_table_doubleClick)
+        self.table.horizontalHeader().resizeSection(0, 160)
 
         self.button = QPushButton(self)
         self.button.clicked.connect(self.on_button_clicked)

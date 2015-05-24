@@ -35,6 +35,12 @@ class MeasurementsWidget(QWidget):
         self.table.requestData.connect(self.on_table_requestData)
         self.table.setColumnHeaders(['Datum a čas', 'Hodnota 1', 'Hodnota 2',
             'Rozdíl hodnot', 'Přístroj', 'Odchylka přístroje'])
+        header = self.table.table.horizontalHeader()
+        header.resizeSection(0, 160)
+        header.resizeSection(1, 110)
+        header.resizeSection(2, 110)
+        header.resizeSection(3, 110)
+        header.resizeSection(4, 160)
 
         layout = QVBoxLayout()
         layout.addWidget(self.filtering)
@@ -50,6 +56,7 @@ class MeasurementsWidget(QWidget):
     @pyqtSlot(dict)
     def on_filterChanged(self, filter_):
         self._filter = filter_
+        self.table.controls.counter.setValue(1)
         self.requestData.emit(self._filter, self.offset, self.limit)
 
     def setData(self, data):
@@ -67,6 +74,8 @@ class MeasurementsWidget(QWidget):
     def filter(self):
         return self._filter
 
+    def updateData(self):
+        self.requestData.emit(self._filter, self.offset, self.limit)
 
 if __name__ == '__main__':
 

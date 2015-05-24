@@ -57,7 +57,7 @@ def remove_device(serial_number):
 
 
 def get_blocks(filter_=None):
-    sql = 'select "id", "description" from "blocks" where "id" in ({0})'
+    sql = 'select "id", "description" from "blocks" where "id" in ({0}) order by "id"'
     subquery = 'select distinct "block_id" from "measurements_view"'
     with conn.cursor() as cur:
         cur.execute(sql.format(subquery + filter_to_sql(cur, filter_)))
@@ -84,7 +84,8 @@ def get_measurements(filter_=None, offset=0, limit=20):
             "measurements_view"'
     with conn.cursor() as cur:
         sql = sql_begin + filter_to_sql(cur, filter_)
-        sql = sql + cur.mogrify(" offset %s limit %s", (offset, limit)).decode('utf-8')
+        sql = sql + cur.mogrify('order by "created" desc offset %s limit %s', 
+            (offset, limit)).decode('utf-8')
         cur.execute(sql)
         return cur.fetchall()
 
@@ -133,7 +134,7 @@ def filter_to_sql(cur, filter_):
         conditions = join_conditions(conditions, additional)
     if 'deviated_values' in filter_ and \
         filter_['deviated_values'] == True:
-        additonal = 'difference > unit_deviation'
+        additional = 'difference > unit_deviation'
         conditions = join_conditions(conditions, additional)
 
     return ' where ' + conditions
@@ -158,9 +159,9 @@ def _get_import_values_string(cur, row):
         row).decode('utf-8')
 
 
-def export_data(filename):
+def export_data(filename, filter_=None):
     """Exports all raw_data."""
-    query = """
+    subquery = """
     select (select round(extract(epoch from "created" at time zone 'utc'))),\
             "unit", "location_id", \
             "longitude", "latitude", "location_description", "value1", \
@@ -168,12 +169,13 @@ def export_data(filename):
             "block_id", "block_description"
     from rdb."raw_data_view"
     """
-
-    outputquery = "COPY ({0}) TO STDOUT WITH CSV DELIMITER ';'".format(query)
+    query = "COPY ({0}) TO STDOUT WITH CSV DELIMITER ';'"
 
     with conn.cursor() as cur:
+        subquery = subquery + filter_to_sql(cur, filter_)
+        query = query.format(subquery)
         with open(filename, 'w') as f:
-            cur.copy_expert(outputquery, f)
+            cur.copy_expert(query, f)
 
 
 

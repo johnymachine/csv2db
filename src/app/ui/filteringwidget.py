@@ -83,6 +83,7 @@ class FilteringWidget(QWidget):
         layout.setStretch(1, 1)
         layout.addWidget(self.changeFilter)
         layout.addWidget(self.removeFilter)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
         self.setMinimumHeight(60)

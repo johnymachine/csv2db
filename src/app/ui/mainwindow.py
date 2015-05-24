@@ -4,7 +4,8 @@ Main application window.
 Author: Tomas Krizek
 """
 
-from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import (QMainWindow, qApp, QMessageBox, QFileDialog,
+    QDialog)
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
 from copy import deepcopy
@@ -14,6 +15,7 @@ from .importdialog import ImportDialog
 from .deviceswidget import DevicesWidget
 from .blockswidget import BlocksWidget
 from .measurementswidget import MeasurementsWidget
+from .exportdialog import ExportDialog
 
 
 class MainWindow(QMainWindow):
@@ -125,7 +127,6 @@ class MainWindow(QMainWindow):
     @pyqtSlot(dict)
     def on_requestBlockData(self, filter_):
         db.execute(db.get_blocks, self.blocksWidget.setData, filter_)
-        #TODO test
 
     @pyqtSlot(int)
     def on_requestBlockDetail(self, block_id):
@@ -144,18 +145,17 @@ class MainWindow(QMainWindow):
             importDialog.setFilename(dialog.selectedFiles()[0])
             importDialog.exec_()
             self.updateData()
+            self.blocksWidget.updateData()
+            self.measurementsWidget.updateData()
 
     def on_action_Export_triggered(self):
-        caption = 'Export dat do csv'
-        dialog = QFileDialog(self, caption)
-        dialog.setFileMode(QFileDialog.AnyFile)
-        dialog.setAcceptMode(QFileDialog.AcceptSave)
-        dialog.setNameFilter('CSV soubory (*.csv)')
-        dialog.setDefaultSuffix('csv')
-        if dialog.exec_():
-            filename = dialog.selectedFiles()[0]
-            # TODO
-            # db.export_data(self.conn, filename)
+        exportDialog = ExportDialog()
+        exportDialog.setFilterOptions(self.options)
+        filter_ = self.measurementsWidget.filter()
+        if self.tabsWidget.currentIndex() == 0:
+            filter_ =self.blocksWidget.filter()
+        exportDialog.setFilter(filter_)
+        exportDialog.exec_()
 
     def updateData(self, *args):
         db.execute(db.get_blocks, self.setBlocks)
