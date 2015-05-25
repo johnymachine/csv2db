@@ -11,23 +11,6 @@ set search_path to 'rdb';
 
 -- ## TABLES ## --
 
-create table raw_data (
-    created timestamp not null, 
-    unit character varying(30) not null,
-    location_id integer not null,
-    longitude real not null,
-    latitude real not null, 
-    location_description character varying(250),
-    value1 real not null,
-    value2 real not null,
-    unit_deviation real not null,
-    serial_number character varying(80) not null,
-    device_deviation real not null,
-    device_description character varying(250),
-    block_id integer not null,
-    block_description character varying(250)
-);
-
 create table measurements (
     id serial,
     created timestamp not null,
@@ -98,9 +81,10 @@ create or replace view measurements_view as
         m.value2 as value2, 
         abs(m.value1 - m.value2) as difference,
         d.description as device_description,
-        d.deviation as device_deviation,
+        u.deviation as unit_deviation,
         m.block_id as block_id,
         m.serial_number as serial_number,
+        d.deviation as device_deviation,
         m.unit as unit,
         l.longitude as loc_x,
         l.latitude as loc_y
@@ -132,45 +116,53 @@ create or replace view raw_data_view as
     join locations as l on l.id = m.location_id;
 
 -- ## FUNCTIONS ## --
-create or replace function insert_raw_data() returns trigger as $insert_raw_data$        
+create or replace function insert_raw_data() returns trigger as $insert_raw_data$
+    declare 
+        u rdb.units%ROWTYPE;
+        d rdb.devices%ROWTYPE;
+        b rdb.blocks%ROWTYPE;
+        l rdb.locations%ROWTYPE;
     begin
-        delete from raw_data where created in (
-        select created from raw_data
-            left outer join units on raw_data.unit = units.unit and raw_data.unit_deviation != units.deviation
-            left outer join devices on raw_data.serial_number = devices.serial_number and (raw_data.device_description != devices.description or raw_data.device_deviation != devices.deviation)
-            left outer join blocks on raw_data.block_id = blocks.id and  raw_data.block_description != blocks.description
-            left outer join locations on raw_data.location_id = locations.id and 
-                (raw_data.longitude != locations.longitude or raw_data.latitude != locations.latitude or raw_data.location_description != locations.description)
-        where units.unit is not null or devices.serial_number is not null or blocks.id is not null);
+        set schema 'rdb';
+        select * into u from units where units.unit = new.unit;
+        select * into d from devices where devices.serial_number = new.serial_number;
+        select * into b from blocks where blocks.id = new.block_id;
+        select * into l from locations where locations.id = new.location_id;
 
-        -- vlozit neexistujici devices, units, ...
-        insert into units
-            select * from first_unique_units();
+        if u is not null and u.deviation != new.unit_deviation then
+            -- raise notice 'row is not consistent because of unit';
+            return null;
+        end if;        
 
-        insert into blocks
-            select * from first_unique_blocks();
+        if d is not null and (d.description != new.device_description or d.deviation != new.device_deviation) then
+            -- raise notice 'row is not consistent because of device';
+            return null;
+        end if;
 
-        insert into devices
-            select * from first_unique_devices();
-
-        insert into locations
-            select * from first_unique_locations();
-            
-        -- smazani nekonzistentnich
-        delete from raw_data where created in (
-        select created from raw_data
-            left outer join units on raw_data.unit = units.unit and raw_data.unit_deviation != units.deviation
-            left outer join devices on raw_data.serial_number = devices.serial_number and (raw_data.device_description != devices.description or raw_data.device_deviation != devices.deviation)
-            left outer join blocks on raw_data.block_id = blocks.id and  raw_data.block_description != blocks.description
-            left outer join locations on raw_data.location_id = locations.id and 
-                (raw_data.longitude != locations.longitude or raw_data.latitude != locations.latitude or raw_data.location_description != locations.description)
-        where units.unit is not null or devices.serial_number is not null or blocks.id is not null);
-
-        insert into measurements(created, value1, value2, unit, block_id, serial_number, location_id)
-        select created, value1, value2, unit, block_id, serial_number, location_id from raw_data;
-
-        delete from raw_data;
-
+        if b is not null and b.description != new.block_description then
+            -- raise notice 'row is not consistent because of block';
+            return null;
+        end if;
+        
+        if l is not null and (l.longitude != new.longitude or l.latitude != new.latitude or l.description != new.location_description) then
+            -- raise notice 'row is not consistent because of location';
+            return null;
+        end if;
+        
+        
+        if u is null then
+            insert into units (unit, deviation) values (new.unit, new.unit_deviation);
+        end if;
+        if d is null then 
+            insert into devices (serial_number, deviation, description) values (new.serial_number, new.device_deviation, new.device_description);
+        end if;
+        if b is null then
+            insert into blocks (id, description) values (new.block_id, new.block_description);
+        end if;
+        if l is null then
+            insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
+        end if;
+        insert into measurements (created, value1, value2, unit, block_id, serial_number, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);        
         return null;
     end;
 $insert_raw_data$ language plpgsql;
@@ -211,109 +203,13 @@ create or replace function log_remove_device() returns trigger as $log_remove_de
     end;
 $log_remove_device$ language plpgsql;
 
-create or replace function first_unique_units() returns setof units as $first_unique_units$
-    begin
-        return query
-        with ordered as
-        (
-        select
-            unit,
-            unit_deviation,
-            row_number() over (partition by unit order by created asc) as rn
-        from
-            raw_data
-        )
-        select
-            unit,
-            unit_deviation
-        from
-            ordered
-        where
-            rn = 1;
-    end;
-$first_unique_units$ language plpgsql;
-
-create or replace function first_unique_blocks() returns setof blocks as $first_unique_blocks$
-    begin
-        return query
-        with ordered as
-        (
-        select
-            block_id,
-            block_description,
-            row_number() over (partition by block_id order by created asc) as rn
-        from
-            raw_data
-        )
-        select
-            block_id,
-            block_description
-        from
-            ordered
-        where
-            rn = 1;
-    end;
-$first_unique_blocks$ language plpgsql;
-
-create or replace function first_unique_devices() returns setof devices as $first_unique_devices$
-    begin
-        return query
-        with ordered as
-        (
-        select
-            serial_number,
-            device_deviation,
-            device_description,
-            row_number() over (partition by serial_number order by created asc) as rn
-        from
-            raw_data
-        )
-        select
-            serial_number,
-            device_deviation,
-            device_description
-        from
-            ordered
-        where
-            rn = 1;
-    end;
-$first_unique_devices$ language plpgsql;
-
-create or replace function first_unique_locations() returns setof locations as $first_unique_locations$
-    begin
-        return query
-        with ordered as
-        (
-        select
-            location_id,
-            longitude,
-            latitude,
-            location_description,
-            row_number() over (partition by location_id order by created asc) as rn
-        from
-            raw_data
-        )
-        select
-            location_id,
-            longitude,
-            latitude,
-            location_description
-        from
-            ordered
-        where
-            rn = 1;
-    end;
-$first_unique_locations$ language plpgsql;
-
-
-
 -- ## TRIGGERS ## --
 create trigger insert_raw_data
-    after insert on raw_data
-    for statement execute procedure insert_raw_data();
+    instead of insert on raw_data_view
+    for each row execute procedure insert_raw_data();
 
 create trigger log_insert_raw_data
-    after insert on raw_data
+    after insert on raw_data_view
     for statement execute procedure log_insert_raw_data();
 
 create trigger log_remove_block
@@ -323,25 +219,3 @@ create trigger log_remove_block
 create trigger log_remove_device
     before delete on devices
     for each row execute procedure log_remove_device();
-
-
--- ## RULES ## --
-create rule units_on_duplicate_ignore as on insert to units
-    where exists (
-        select 1 from units where unit = new.unit
-    ) do instead nothing;
-
-create rule devices_on_duplicate_ignore as on insert to devices
-    where exists (
-        select 1 from devices where serial_number = new.serial_number
-    ) do instead nothing;
-
-create rule blocks_on_duplicate_ignore as on insert to blocks
-    where exists (
-        select 1 from blocks where id = new.id
-    ) do instead nothing;
-
-create rule locations_on_duplicate_ignore as on insert to locations
-    where exists (
-        select 1 from locations where id = new.id
-    ) do instead nothing; 

@@ -88,7 +88,6 @@ def get_measurements(filter_=None, offset=0, limit=20):
         sql = sql_begin + filter_to_sql(cur, filter_)
         sql = sql + cur.mogrify('order by "created" desc offset %s limit %s', 
             (offset, limit)).decode('utf-8')
-        print(sql)
         cur.execute(sql)
         return cur.fetchall()
 
@@ -162,7 +161,7 @@ def filter_to_sql(cur, filter_):
 
 def import_data(data):
     """Performs multiple insert of data."""
-    sql = 'insert into rdb."raw_data"("created", "unit", "location_id", \
+    sql = 'insert into rdb."raw_data_view"("created", "unit", "location_id", \
             "longitude", "latitude", "location_description", "value1", \
             "value2", "unit_deviation", "serial_number", "device_deviation", "device_description", \
             "block_id", "block_description") values '
