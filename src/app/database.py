@@ -45,7 +45,7 @@ with open("database.json", 'r') as stream:
 
 def get_devices():
     """Retrieves all devices from database."""
-    sql = 'select "serial_number", "description" from "devices"'
+    sql = 'select "serial_number", "deviation", "description" from "devices"'
     with conn.cursor() as cur:
         cur.execute(sql)
         return cur.fetchall()
@@ -82,12 +82,13 @@ def get_units():
 
 def get_measurements(filter_=None, offset=0, limit=20):
     sql_begin = 'select "created" at time zone \'utc\', "value1", "value2", "difference", \
-            "device_description", "unit_deviation" from \
+            "device_description", "device_deviation" from \
             "measurements_view"'
     with conn.cursor() as cur:
         sql = sql_begin + filter_to_sql(cur, filter_)
         sql = sql + cur.mogrify('order by "created" desc offset %s limit %s', 
             (offset, limit)).decode('utf-8')
+        print(sql)
         cur.execute(sql)
         return cur.fetchall()
 
@@ -161,9 +162,9 @@ def filter_to_sql(cur, filter_):
 
 def import_data(data):
     """Performs multiple insert of data."""
-    sql = 'insert into rdb."raw_data_view"("created", "unit", "location_id", \
+    sql = 'insert into rdb."raw_data"("created", "unit", "location_id", \
             "longitude", "latitude", "location_description", "value1", \
-            "value2", "unit_deviation", "serial_number", "device_description", \
+            "value2", "unit_deviation", "serial_number", "device_deviation", "device_description", \
             "block_id", "block_description") values '
 
     with conn.cursor() as cur:
@@ -174,7 +175,7 @@ def import_data(data):
 
 def _get_import_values_string(cur, row):
     row[0] = datetime.utcfromtimestamp(int(row[0]))
-    return cur.mogrify("(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+    return cur.mogrify("(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         row).decode('utf-8')
 
 
@@ -184,7 +185,7 @@ def export_data(filename, filter_=None):
     select (select round(extract(epoch from "created" at time zone 'utc'))),\
             "unit", "location_id", \
             "longitude", "latitude", "location_description", "value1", \
-            "value2", "unit_deviation", "serial_number", "device_description", \
+            "value2", "unit_deviation", "serial_number", "device_deviation", "device_description", \
             "block_id", "block_description"
     from rdb."raw_data_view"
     """

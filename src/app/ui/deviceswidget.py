@@ -23,8 +23,9 @@ class DevicesWidget(QWidget):
         super(DevicesWidget, self).__init__(parent)
 
         self.table = CustomTableWidget(self)
-        self.table.setColumnHeaders(['Sériové číslo', 'Popis'])
+        self.table.setColumnHeaders(['Sériové číslo', 'Odchylka', 'Popis'])
         self.table.horizontalHeader().resizeSection(0, 190)
+        self.table.horizontalHeader().resizeSection(1, 90)
 
         self.button = QPushButton(self)
         self.button.clicked.connect(self.on_button_clicked)
