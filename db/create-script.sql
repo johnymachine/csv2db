@@ -256,19 +256,23 @@ create trigger log_remove_device
     for each row execute procedure log_remove_device();
 
 
-create rule units_on_duplicate_ignore as on insert to units
-     where exists (
-         select 1 from units where unit = new.unit) do instead nothing;
-
-/*
 -- ## RULES ## --
--- useless, slows down inserts to a crawl
-create or replace rule measurements_on_duplicate_ignore as on insert to measurements
+create rule units_on_duplicate_ignore as on insert to units
     where exists (
-        select 1 from measurements where 
-            created = new.created and value1 = new.value1 and
-            value2 = new.value2 and unit = new.unit and
-            block_id = new.block_id and device_sn = new.device_sn and
-            location_id = new.location_id
+        select 1 from units where unit = new.unit
     ) do instead nothing;
-*/
+
+create rule devices_on_duplicate_ignore as on insert to devices
+    where exists (
+        select 1 from devices where serial_number = new.serial_number
+    ) do instead nothing;
+
+create rule blocks_on_duplicate_ignore as on insert to blocks
+    where exists (
+        select 1 from blocks where id = new.id
+    ) do instead nothing;
+
+create rule locations_on_duplicate_ignore as on insert to locations
+    where exists (
+        select 1 from locations where id = new.id
+    ) do instead nothing; 
