@@ -6,11 +6,11 @@
 set schema 'rdb';
 begin;
 
+delete from measurements;
 delete from units;
 delete from devices;
 delete from blocks;
 delete from locations;
-delete from measurements;
 
 insert into raw_data_view (
         created, unit, location_id, longitude, latitude, location_description, value1, value2, 

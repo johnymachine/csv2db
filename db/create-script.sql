@@ -9,6 +9,23 @@ create schema rdb;
 set schema 'rdb';
 
 -- ## TABLES ## --
+
+create table raw_data (
+    created timestamp not null, 
+    unit character varying(30) not null,
+    location_id integer not null,
+    longitude real not null,
+    latitude real not null, 
+    location_description character varying(250),
+    value1 real not null,
+    value2 real not null,
+    unit_deviation real not null,
+    device_sn character varying(80) not null,
+    device_description character varying(250),
+    block_id integer not null,
+    block_description character varying(250)
+);
+
 create table measurements (
     id serial,
     created timestamp not null,
@@ -110,56 +127,9 @@ create or replace view raw_data_view as
     join locations as l on l.id = m.location_id;
 
 -- ## FUNCTIONS ## --
-create or replace function insert_raw_data() returns trigger as $insert_raw_data$
-    declare 
-        u rdb.units%ROWTYPE;
-        d rdb.devices%ROWTYPE;
-        b rdb.blocks%ROWTYPE;
-        l rdb.locations%ROWTYPE;
+create or replace function insert_raw_data() returns trigger as $insert_raw_data$        
     begin
-        set schema 'rdb';
-        select * into u from units where units.unit = new.unit;
-        select * into d from devices where devices.serial_number = new.serial_number;
-        select * into b from blocks where blocks.id = new.block_id;
-        select * into l from locations where locations.id = new.location_id;
-
-        if u is not null and u.deviation != new.unit_deviation then
-            -- raise notice 'row is not consistent because of unit';
-            return null;
-        end if;        
-
-        if d is not null and d.description != new.device_description then
-            -- raise notice 'row is not consistent because of device';
-            return null;
-        end if;
-
-        if b is not null and b.description != new.block_description then
-            -- raise notice 'row is not consistent because of block';
-            return null;
-        end if;
-
-        --TODO enable
-        /*
-        if l is not null and (l.longitude != new.longitude or l.latitude != new.latitude or l.description != new.location_description) then
-            -- raise notice 'row is not consistent because of location';
-            return null;
-        end if;
-        */
-        
-        if u is null then
-            insert into units (unit, deviation) values (new.unit, new.unit_deviation);
-        end if;
-        if d is null then 
-            insert into devices (serial_number, description) values (new.serial_number, new.device_description);
-        end if;
-        if b is null then
-            insert into blocks (id, description) values (new.block_id, new.block_description);
-        end if;
-        if l is null then
-            insert into locations (id, longitude, latitude, description) values (new.location_id, new.longitude, new.latitude, new.location_description);
-        end if;
-        insert into measurements (created, value1, value2, unit, block_id, device_sn, location_id) values (new.created, new.value1, new.value2, new.unit, new.block_id, new.serial_number, new.location_id);        
-        return null;
+                
     end;
 $insert_raw_data$ language plpgsql;
 
@@ -201,8 +171,8 @@ $log_remove_device$ language plpgsql;
 
 -- ## TRIGGERS ## --
 create trigger insert_raw_data
-    instead of insert on raw_data_view
-    for each row execute procedure insert_raw_data();
+    after insert on raw_data
+    for statement execute procedure insert_raw_data();
 
 create trigger log_insert_raw_data
     after insert on raw_data_view
