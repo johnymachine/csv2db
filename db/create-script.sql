@@ -7,6 +7,7 @@
 drop schema if exists rdb cascade;
 create schema rdb;
 set schema 'rdb';
+set search_path to 'rdb';
 
 -- ## TABLES ## --
 
@@ -169,6 +170,74 @@ create or replace function log_remove_device() returns trigger as $log_remove_de
     end;
 $log_remove_device$ language plpgsql;
 
+create or replace function first_unique_units() returns setof units as $first_unique_units$
+    begin
+        return query
+        with ordered as
+        (
+        select
+            unit,
+            unit_deviation,
+            row_number() over (partition by unit order by created asc) as rn
+        from
+            raw_data
+        )
+        select
+            unit,
+            unit_deviation
+        from
+            ordered
+        where
+            rn = 1;
+    end;
+$first_unique_units$ language plpgsql;
+
+create or replace function first_unique_blocks() returns setof blocks as $first_unique_blocks$
+    begin
+        return query
+        with ordered as
+        (
+        select
+            block_id,
+            block_description,
+            row_number() over (partition by block_id order by created asc) as rn
+        from
+            raw_data
+        )
+        select
+            block_id,
+            block_description
+        from
+            ordered
+        where
+            rn = 1;
+    end;
+$first_unique_blocks$ language plpgsql;
+
+create or replace function first_unique_devices() returns setof devices as $first_unique_devices$
+    begin
+        return query
+        with ordered as
+        (
+        select
+            serial_number,
+            device_description,
+            row_number() over (partition by serial_number order by created asc) as rn
+        from
+            raw_data
+        )
+        select
+            serial_number,
+            device_description
+        from
+            ordered
+        where
+            rn = 1;
+    end;
+$first_unique_devices$ language plpgsql;
+
+
+
 -- ## TRIGGERS ## --
 create trigger insert_raw_data
     after insert on raw_data
@@ -189,7 +258,7 @@ create trigger log_remove_device
 
 create rule units_on_duplicate_ignore as on insert to units
      where exists (
-         select 1 from units where id = new.id) do instead nothing;
+         select 1 from units where unit = new.unit) do instead nothing;
 
 /*
 -- ## RULES ## --
