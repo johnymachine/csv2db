@@ -12,6 +12,7 @@ from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread, QMutex, QMutexLocker
 import psycopg2
 from datetime import datetime
 import atexit
+import json
 
 
 REMOTE = {
@@ -38,7 +39,8 @@ def connect(location=LOCAL):
     return conn
 
 
-conn = connect(REMOTE)
+with open("database.json", 'r') as stream:
+	conn = connect(json.load(stream))
 
 
 def get_devices():
