@@ -187,6 +187,10 @@ create trigger log_remove_device
     for each row execute procedure log_remove_device();
 
 
+create rule units_on_duplicate_ignore as on insert to units
+     where exists (
+         select 1 from units where id = new.id) do instead nothing;
+
 /*
 -- ## RULES ## --
 -- useless, slows down inserts to a crawl
